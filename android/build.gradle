@@ -102,23 +102,26 @@ dependencies {
   debugImplementation(name: "tools-release", ext: 'aar')
   
   //---------- ADN SDK（本地aar方式，因为不是所有ADN都支持Maven）----------
+  //注意：使用api方式声明，既能让mediation-auto-adapter插件识别版本号，
+  //又能确保SDK被包含在库中供下游使用
   //---------- GDT 优量汇 ----------
-  implementation(name: "GDTSDK.unionNormal.4.660.1530", ext: 'aar')
+  api(name: "GDTSDK.unionNormal.4.660.1530", ext: 'aar')
   
   //---------- Baidu 百度 ----------
-  implementation(name: "Baidu_MobAds_SDK_v9.423", ext: 'aar')
+  api(name: "Baidu_MobAds_SDK_v9.423", ext: 'aar')
   
   //---------- KS 快手 ----------
-  implementation(name: "kssdk-ad-4.9.20.1", ext: 'aar')
+  api(name: "kssdk-ad-4.9.20.1", ext: 'aar')
   
   //---------- Sigmob ----------
-  implementation(name: "windAd-4.24.7", ext: 'aar')
-  implementation(name: "windAd-common-1.8.6", ext: 'aar')
+  api(name: "windAd-4.24.7", ext: 'aar')
+  api(name: "windAd-common-1.8.6", ext: 'aar')
   
   //---------- AdMob ----------
-  implementation 'com.google.android.gms:play-services-ads:17.2.0'
+  // AdMob通过Maven方式引入，插件可以直接识别版本号
+  api 'com.google.android.gms:play-services-ads:17.2.0'
   
-  //注意：Adapter将通过mediation-auto-adapter插件自动拉取，无需手动引入
+  //注意：Adapter将通过mediation-auto-adapter插件自动拉取匹配版本，无需手动引入
 }
 
 //配置自动适配ADN Adapter
@@ -126,6 +129,6 @@ mediationAutoAdapter {
   //自动适配所有adn adapter，默认值为true
   autoUpdate true
   
-  //配置需要自动适配的adn列表
+  //配置需要自动适配的adn列表（插件会根据compileOnly声明的SDK版本自动匹配adapter）
   autoUpdateAdn = ["gdt", "baidu", "ks", "admob", "sigmob"]
 }

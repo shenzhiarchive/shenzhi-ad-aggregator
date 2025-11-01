@@ -37,7 +37,7 @@ yarn add @shenzhi/ad-aggregator
 - ✅ 穿山甲融合SDK通过Maven自动拉取（7.2.0.9版本）
 - ✅ 已添加okhttp依赖（3.12.1版本，Maven方式）
 - ✅ 所有ADN SDK已内置在`android/libs/adn`目录
-- ✅ ADN Adapter通过mediation-auto-adapter插件自动拉取，无需手动配置
+- ✅ ADN Adapter通过mediation-auto-adapter插件自动拉取匹配版本
 - ✅ 已配置FileProvider和TTMultiProvider
 - ✅ 已添加所有必要权限
 - ✅ 已配置ProGuard混淆规则
@@ -87,12 +87,12 @@ allprojects {
 
 #### 自动拉取Adapter说明
 
-本库已配置mediation-auto-adapter插件，会自动：
-- 检测已引入的ADN SDK版本
-- 自动下载匹配的Adapter版本
+本库已配置mediation-auto-adapter插件（参考[官方文档](https://bytedance.larkoffice.com/docx/VnXJdoYIroFxEkx2s5ActC9hnSb)），会自动：
+- 检测已引入的ADN SDK版本（通过本地aar文件名识别）
+- 自动从Maven仓库下载匹配的Adapter版本
 - 无需手动管理Adapter依赖
 
-如需自定义配置，可参考[官方文档](https://bytedance.larkoffice.com/docx/VnXJdoYIroFxEkx2s5ActC9hnSb)。
+**注意：** 使用本地aar文件时，确保aar文件名格式正确（包含版本号），插件才能正确识别版本并自动匹配adapter。
 
 ### iOS配置
 
