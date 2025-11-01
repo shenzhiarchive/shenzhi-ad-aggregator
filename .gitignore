@@ -64,6 +64,10 @@ buck-out/
 android/app/libs
 android/keystores/debug.keystore
 
+# 保留android/libs目录（包含穿山甲SDK）
+!android/libs/
+!android/libs/**/*.aar
+
 # Yarn
 .yarn/*
 !.yarn/patches
