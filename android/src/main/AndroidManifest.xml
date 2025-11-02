@@ -1,10 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-  
+
   <!-- 穿山甲广告SDK必要权限 -->
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-  
+
   <!-- 穿山甲广告SDK可选权限 -->
   <uses-permission android:name="android.permission.READ_PHONE_STATE" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -14,8 +14,25 @@
   <uses-permission android:name="android.permission.GET_TASKS" />
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-permission android:name="android.permission.WAKE_LOCK" />
-  
-  <application>
+
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+  <application android:allowBackup="true">
+    <!-- admob start================== -->
+    <!-- AdMob App ID -->
+    <!-- 使用占位符，应用可以通过build.gradle中的manifestPlaceholders配置 -->
+    <!-- 默认值为测试App ID，生产环境请在应用的build.gradle中配置真实App ID -->
+    <!-- 获取App ID: https://apps.admob.com -->
+    <provider
+      android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+      android:authorities="${applicationId}.mobileadsinitprovider"
+      tools:replace="android:authorities" />
+
+    <meta-data
+        android:name="com.google.android.gms.ads.APPLICATION_ID"
+        android:value="${ADMOB_APP_ID}"/>
+    <!--- admob end================== -->
+
+
     <!-- 适配Android 7.0及以上版本，FileProvider配置 -->
     <!-- 注意：${applicationId}会在构建时自动替换为应用的applicationId（包名），无需手动配置 -->
     <!-- 如果应用已配置FileProvider，Android构建系统会自动合并配置 -->
@@ -28,19 +45,109 @@
             android:name="android.support.FILE_PROVIDER_PATHS"
             android:resource="@xml/file_paths" />
     </provider>
-    
-    <!-- 穿山甲SDK必需配置：TTMultiProvider -->
+
+    <!-- 穿山甲 start================== -->
     <!-- 注意：${applicationId}会在构建时自动替换为应用的applicationId（包名） -->
     <!-- 此Provider为穿山甲SDK必需，如果应用已配置相同authorities的Provider，构建系统会自动处理 -->
     <provider
-        android:name="com.bytedance.sdk.openadsdk.multipro.TTMultiProvider"
-        android:authorities="${applicationId}.TTMultiProvider"
+      android:name="com.bytedance.sdk.openadsdk.TTFileProvider"
+      android:authorities="${applicationId}.TTFileProvider"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/pangle_file_paths" />
+    </provider>
+
+    <provider
+      android:name="com.bytedance.sdk.openadsdk.multipro.TTMultiProvider"
+      android:authorities="${applicationId}.TTMultiProvider"
+      android:exported="false" />
+    <!-- 穿山甲 end================== -->
+
+    <!-- baidu start================== -->
+    <!-- 声明打开落地页的Activity（不建议修改主题配置）-->
+    <activity
+      android:name="com.baidu.mobads.sdk.api.AppActivity"
+      android:configChanges="screenSize|keyboard|keyboardHidden|orientation"
+      android:theme="@android:style/Theme.NoTitleBar"
+      tools:replace="android:configChanges" />
+     <!-- 声明打开显示激励视频/全屏视频的Activity-->
+     <activity
+       android:name="com.baidu.mobads.sdk.api.MobRewardVideoActivity"
+       android:configChanges="screenSize|orientation|keyboardHidden"
+       android:launchMode="singleTask"
+       android:theme="@android:style/Theme.Translucent.NoTitleBar"
+       tools:replace="android:configChanges" />
+
+    <!-- 如果targetSdkVersion设置值>=24，则强烈建议添加以下provider，否则会影响app变现 -->
+    <!-- android:authorities="${packageName}.bd.provider" authorities中${packageName}部分必须替换成app自己的包名 -->
+    <!-- 原来的FileProvider在新版本中改为BdFileProvider,继承自v4的FileProvider,需要在应用内引用support-v4包 -->
+    <provider
+      android:name="com.baidu.mobads.sdk.api.BdFileProvider"
+      android:authorities="${applicationId}.bd.provider"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/bd_file_paths" />
+    </provider>
+    <!-- baidu end================== -->
+
+
+    <!-- GDT start================== -->
+    <!-- targetSDKVersion >= 24时才需要添加这个provider。provider的authorities属性的值为${applicationId}.fileprovider，请开发者根据自己的${applicationId}来设置这个值，例如本例中applicationId为"com.qq.e.union.demo"。 -->
+    <provider
+      android:name="com.qq.e.comm.GDTFileProvider"
+      android:authorities="${applicationId}.gdt.fileprovider"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/gdt_file_path" />
+    </provider>
+
+    <activity
+      android:name="com.qq.e.ads.PortraitADActivity"
+      android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+      tools:replace="android:configChanges"
+      android:screenOrientation="portrait" />
+    <activity
+      android:name="com.qq.e.ads.LandscapeADActivity"
+      android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+      android:screenOrientation="landscape"
+      tools:replace="android:screenOrientation,android:configChanges" />
+
+    <!-- 声明SDK所需要的组件 -->
+    <service
+      android:name="com.qq.e.comm.DownloadService"
+      android:exported="false" />
+    <!-- 请开发者注意字母的大小写，ADActivity，而不是AdActivity -->
+
+    <activity
+      android:name="com.qq.e.ads.ADActivity"
+      tools:replace="android:configChanges"
+      android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
+    <!-- GDT end================== -->
+
+    <!-- sigmob start================== -->
+    <activity
+        android:name="com.sigmob.sdk.base.common.AdActivity"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+        android:theme="@style/sig_transparent_style"
+        tools:replace="android:theme" />
+
+    <provider
+        android:name="com.sigmob.sdk.SigmobFileProvider"
+        android:authorities="${applicationId}.sigprovider"
         android:exported="false"
         android:grantUriPermissions="true">
         <meta-data
             android:name="android.support.FILE_PROVIDER_PATHS"
-            android:resource="@xml/file_paths" />
+            android:resource="@xml/sigmob_provider_paths" />
     </provider>
+    <!-- sigmob end================== -->
+
   </application>
-  
+
 </manifest>

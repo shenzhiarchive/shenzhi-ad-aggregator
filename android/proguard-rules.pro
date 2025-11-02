@@ -1,51 +1,66 @@
-# 穿山甲广告SDK混淆规则
+//聚合混淆
+-keep class bykvm*.**
+-keep class com.bytedance.msdk.adapter.**{ public *; }
+-keep class com.bytedance.msdk.api.** {
+ public *;
+}
 
-# 穿山甲主SDK
--keep class com.bytedance.sdk.** { *; }
--keep class com.pgl.sys.ces.** { *; }
+# baidu sdk 不接入baidu sdk可以不引入
+-ignorewarnings
+-dontwarn com.baidu.mobads.sdk.api.**
+-keepclassmembers class * extends android.app.Activity {
+   public void *(android.view.View);
+}
 
-# GDT优量汇
--keep class com.qq.e.** { *; }
--dontwarn com.qq.e.**
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
 
-# 百度广告
 -keep class com.baidu.mobads.** { *; }
--dontwarn com.baidu.mobads.**
+-keep class com.style.widget.** {*;}
+-keep class com.component.** {*;}
+-keep class com.baidu.ad.magic.flute.** {*;}
+-keep class com.baidu.mobstat.forbes.** {*;}
 
-# 快手广告
--keep class com.kwad.** { *; }
+#ks  不接入ks sdk可以不引入
+-keep class org.chromium.** {*;}
+-keep class org.chromium.** { *; }
+-keep class aegon.chrome.** { *; }
+-keep class com.kwai.**{ *; }
+-dontwarn com.kwai.**
 -dontwarn com.kwad.**
+-dontwarn com.ksad.**
+-dontwarn aegon.chrome.**
 
-# Sigmob
--keep class com.sigmob.** { *; }
+# Admob 不接入admob sdk可以不引入
+-keep class com.google.android.gms.ads.MobileAds {
+ public *;
+}
+
+#sigmob  不接入sigmob sdk可以不引入
+-dontwarn android.support.v4.**
+-keep class android.support.v4.** { *; }
+-keep interface android.support.v4.** { *; }
+-keep public class * extends android.support.v4.**
+
+-keep class sun.misc.Unsafe { *; }
 -dontwarn com.sigmob.**
+-keep class com.sigmob.**.**{*;}
 
-# AdMob
--keep class com.google.android.gms.ads.** { *; }
--dontwarn com.google.android.gms.ads.**
-
-# 广告相关回调接口
--keepclassmembers class * {
-    @android.webkit.JavascriptInterface <methods>;
-}
-
-# 保留Serializable序列化的类不被混淆
--keepclassmembers class * implements java.io.Serializable {
-    static final long serialVersionUID;
-    private static final java.io.ObjectStreamField[] serialPersistentFields;
-    !static !transient <fields>;
-    private void writeObject(java.io.ObjectOutputStream);
-    private void readObject(java.io.ObjectInputStream);
-    java.lang.Object writeReplace();
-    java.lang.Object readResolve();
-}
-
-# 保留WebView相关类
--keepclassmembers class * extends android.webkit.WebViewClient {
-    public void *(android.webkit.WebView, java.lang.String, android.graphics.Bitmap);
-    public boolean *(android.webkit.WebView, java.lang.String);
-}
--keepclassmembers class * extends android.webkit.WebChromeClient {
-    public void *(android.webkit.WebView, java.lang.String);
-}
-
+#oaid 不同的版本混淆代码不太一致，你注意你接入的oaid版本 ，不接入oaid可以不添加
+-dontwarn com.bun.**
+-keep class com.bun.** {*;}
+-keep class a.**{*;}
+-keep class XI.CA.XI.**{*;}
+-keep class XI.K0.XI.**{*;}
+-keep class XI.XI.K0.**{*;}
+-keep class XI.vs.K0.**{*;}
+-keep class XI.xo.XI.XI.**{*;}
+-keep class com.asus.msa.SupplementaryDID.**{*;}
+-keep class com.asus.msa.sdid.**{*;}
+-keep class com.huawei.hms.ads.identifier.**{*;}
+-keep class com.samsung.android.deviceidservice.**{*;}
+-keep class com.zui.opendeviceidlibrary.**{*;}
+-keep class org.json.**{*;}
+-keep public class com.netease.nis.sdkwrapper.Utils {public <methods>;}

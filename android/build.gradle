@@ -33,6 +33,12 @@ android {
   defaultConfig {
     minSdkVersion getExtOrIntegerDefault("minSdkVersion")
     targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
+
+    // AdMob App ID占位符默认值（测试App ID）
+    // 应用可以在自己的build.gradle中通过manifestPlaceholders覆盖此值
+    manifestPlaceholders = [
+      ADMOB_APP_ID: "ca-app-pub-3940256099942544~3347511713"
+    ]
   }
 
   buildFeatures {
@@ -85,26 +91,43 @@ def kotlin_version = getExtOrDefault("kotlinVersion")
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-  
-  //穿山甲SDK必需依赖（参考官方文档方式二）
+
+  //穿山甲SDK必需依赖
   implementation 'com.squareup.okhttp3:okhttp:3.12.1'
-  
+
   //导入libs目录下的所有jar文件
   implementation fileTree(include: ['*.jar'], dir: 'libs')
-  
-  //导入libs目录下的aar文件（不包括测试工具）
-  implementation fileTree(include: ['*.aar'], dir: 'libs', exclude: ['tools-release.aar'])
-  
-  //导入adapter和adn目录下的所有aar文件
-  implementation fileTree(include: ['*.aar'], dir: 'libs/adapter')
-  implementation fileTree(include: ['*.aar'], dir: 'libs/adn')
-  
+
+  //融合基础包
+  implementation(name: "open_ad_sdk_7.2.0.9", ext: 'aar')
+
+  //ks
+  implementation(name: "mediation_ks_adapter_4.9.20.1.1", ext: 'aar')
+  implementation(name: "kssdk-ad-4.9.20.1", ext: 'aar')
+
+  //baidu
+  implementation(name: "mediation_baidu_adapter_9.423.1", ext: 'aar')
+  implementation(name: "Baidu_MobAds_SDK_v9.423", ext: 'aar')
+
+  //gdt
+  implementation(name: "mediation_gdt_adapter_4.660.1530.1", ext: 'aar')
+  implementation(name: "GDTSDK.unionNormal.4.660.1530", ext: 'aar')
+
+  //sigmob
+  implementation(name: "mediation_sigmob_adapter_4.24.7.1", ext: 'aar')
+  implementation(name: "windAd-4.24.7", ext: 'aar')
+  implementation(name: "windAd-common-1.8.6", ext: 'aar')
+
+  //admob 
+  implementation(name: "mediation_admob_adapter_17.2.0.71", ext: 'aar')
+  implementation("com.google.android.gms:play-services-ads:17.2.0") {
+      exclude group: 'com.android.support'
+  }
+
   //穿山甲测试工具（仅在Debug构建中包含，Release构建自动排除）
   debugImplementation fileTree(include: ['tools-release.aar'], dir: 'libs')
-  
-  //---------- AdMob ----------
-  implementation("com.google.android.gms:play-services-ads:17.2.0") {
-    exclude group: 'com.android.support'
-  }
+
+  //---------- 旧版 SDK 兼容性依赖 ----------
+  implementation 'com.android.support:support-v4:28.0.0'
 }
 

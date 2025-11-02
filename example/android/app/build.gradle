@@ -84,6 +84,15 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+
+        // AdMob App ID配置
+        // 库中已提供默认测试App ID，如需使用真实App ID，请在此处配置
+        // 获取App ID: https://apps.admob.com
+        manifestPlaceholders = [
+            ADMOB_APP_ID: "ca-app-pub-3940256099942544~3347511713" // 测试App ID
+            // 生产环境请替换为您的真实App ID，例如：
+            // ADMOB_APP_ID: "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX"
+        ]
     }
     signingConfigs {
         debug {

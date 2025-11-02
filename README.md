@@ -127,6 +127,50 @@ allprojects {
 - 使用`fileTree`方式自动引入libs目录下的所有aar和jar文件
 - 测试工具（tools-release.aar）仅在Debug构建中包含，Release构建自动排除
 
+#### AdMob配置
+
+本库已内置AdMob SDK（Google Mobile Ads SDK 17.2.0），并使用占位符方式配置App ID。
+
+**配置方式：通过build.gradle配置（推荐）**
+
+库中已提供默认测试App ID，您可以在应用的`android/app/build.gradle`中配置真实App ID：
+
+```gradle
+android {
+    defaultConfig {
+        // ... 其他配置 ...
+        
+        // AdMob App ID配置
+        manifestPlaceholders = [
+            ADMOB_APP_ID: "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX" // 您的真实App ID
+        ]
+    }
+}
+```
+
+**配置说明**：
+- 库中已默认配置测试App ID：`ca-app-pub-3940256099942544~3347511713`（仅用于开发测试）
+- 生产环境请在应用的`build.gradle`中配置您的真实App ID
+- 应用中的`manifestPlaceholders`会自动覆盖库中的默认值
+- 获取真实App ID：登录[AdMob控制台](https://apps.admob.com)创建应用后获取
+
+**示例配置**（`android/app/build.gradle`）：
+
+```gradle
+android {
+    defaultConfig {
+        applicationId "com.your.app"
+        // ... 其他配置 ...
+        
+        manifestPlaceholders = [
+            ADMOB_APP_ID: "ca-app-pub-3940256099942544~3347511713" // 测试App ID
+            // 生产环境请替换为：
+            // ADMOB_APP_ID: "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX"
+        ]
+    }
+}
+```
+
 ### iOS配置
 
 iOS配置将在后续版本中提供。
