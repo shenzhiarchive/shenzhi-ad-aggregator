@@ -1,4 +1,4 @@
-import PangleAdManager, { type InitConfig } from './NativeTTAdManger';
+import PangleAdManager, { type InitConfig } from './NativePangleAdManager';
 
 /**
  * 初始化穿山甲融合SDK

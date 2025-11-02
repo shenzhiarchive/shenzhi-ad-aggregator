@@ -1,4 +1,5 @@
-import { TurboModuleRegistry, type TurboModule } from 'react-native';
+import type { TurboModule } from 'react-native';
+import { TurboModuleRegistry } from 'react-native';
 
 /**
  * 初始化配置参数接口
@@ -23,7 +24,7 @@ export interface InitConfig {
 }
 
 /**
- * PangleAdManager TurboModule接口
+ * PangleAdManager TurboModule接口规格
  */
 export interface Spec extends TurboModule {
   /**

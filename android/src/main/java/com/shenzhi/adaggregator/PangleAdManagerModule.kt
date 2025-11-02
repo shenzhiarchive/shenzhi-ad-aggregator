@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import com.facebook.react.bridge.*
 import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.turbomodule.core.interfaces.TurboModule
 import com.bytedance.sdk.openadsdk.TTAdConfig
 import com.bytedance.sdk.openadsdk.TTAdSdk
 import com.bytedance.sdk.openadsdk.TTAdManager
@@ -14,12 +15,12 @@ import com.bytedance.sdk.openadsdk.mediation.init.MediationPrivacyConfig
 import java.util.HashMap
 
 /**
- * 穿山甲广告SDK主管理Module
+ * 穿山甲广告SDK主管理Module (TurboModule)
  * 负责SDK初始化和为不同类型广告提供初始化实例
  */
 @ReactModule(name = PangleAdManagerModule.NAME)
 class PangleAdManagerModule(reactContext: ReactApplicationContext) :
-    ReactContextBaseJavaModule(reactContext) {
+    ReactContextBaseJavaModule(reactContext), TurboModule {
 
     private var isInitialized = false
     private var mediationManager: IMediationManager? = null
@@ -53,20 +54,21 @@ class PangleAdManagerModule(reactContext: ReactApplicationContext) :
                 promise.reject("INVALID_CONFIG", "appId不能为空")
                 return
             }
-            val debug = config.getBoolean("debug") ?: false
-            val supportMultiProcess = config.getBoolean("supportMultiProcess") ?: false
+            // 安全获取布尔值：先检查键是否存在
+            val debug = if (config.hasKey("debug")) config.getBoolean("debug") else false
+            val supportMultiProcess = if (config.hasKey("supportMultiProcess")) config.getBoolean("supportMultiProcess") else false
 
             // 隐私设置（默认true）
-            val allowLocation = config.getBoolean("allowLocation") ?: true
-            val allowPhoneState = config.getBoolean("allowPhoneState") ?: true
-            val allowWifiState = config.getBoolean("allowWifiState") ?: true
-            val allowAndroidId = config.getBoolean("allowAndroidId") ?: true
-            val allowWriteExternal = config.getBoolean("allowWriteExternal") ?: true
+            val allowLocation = if (config.hasKey("allowLocation")) config.getBoolean("allowLocation") else true
+            val allowPhoneState = if (config.hasKey("allowPhoneState")) config.getBoolean("allowPhoneState") else true
+            val allowWifiState = if (config.hasKey("allowWifiState")) config.getBoolean("allowWifiState") else true
+            val allowAndroidId = if (config.hasKey("allowAndroidId")) config.getBoolean("allowAndroidId") else true
+            val allowWriteExternal = if (config.hasKey("allowWriteExternal")) config.getBoolean("allowWriteExternal") else true
 
             // 进阶设置
-            val themeStatus = config.getInt("themeStatus") ?: 0
-            val limitPersonalAds = config.getBoolean("limitPersonalAds") ?: false
-            val limitProgrammaticAds = config.getBoolean("limitProgrammaticAds") ?: false
+            val themeStatus = if (config.hasKey("themeStatus")) config.getInt("themeStatus") else 0
+            val limitPersonalAds = if (config.hasKey("limitPersonalAds")) config.getBoolean("limitPersonalAds") else false
+            val limitProgrammaticAds = if (config.hasKey("limitProgrammaticAds")) config.getBoolean("limitProgrammaticAds") else false
 
             // 在主线程中调用初始化
             Handler(Looper.getMainLooper()).post {
@@ -110,7 +112,9 @@ class PangleAdManagerModule(reactContext: ReactApplicationContext) :
                         }
                     })
                 } catch (e: Exception) {
-                    promise.reject("INIT_EXCEPTION", "初始化异常: ${e.message}", e)
+                    Handler(Looper.getMainLooper()).post {
+                        promise.reject("INIT_EXCEPTION", "初始化异常: ${e.message}", e)
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -179,6 +183,16 @@ class PangleAdManagerModule(reactContext: ReactApplicationContext) :
      */
     fun isInitialized(): Boolean {
         return isInitialized
+    }
+
+    /**
+     * TurboModule 接口要求的方法
+     * 当模块被销毁时调用
+     */
+    override fun invalidate() {
+        // 清理资源
+        isInitialized = false
+        mediationManager = null
     }
 
 

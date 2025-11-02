@@ -25,7 +25,7 @@ class AdAggregatorPackage : BaseReactPackage() {
         false,  // canOverrideExistingModule
         false,  // needsEagerInit
         false,  // isCxxModule
-        false // isTurboModule (使用普通Module)
+        true // isTurboModule (使用TurboModule)
       )
       moduleInfos
     }
