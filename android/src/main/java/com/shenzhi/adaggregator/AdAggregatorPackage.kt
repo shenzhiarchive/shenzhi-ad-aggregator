@@ -9,23 +9,23 @@ import java.util.HashMap
 
 class AdAggregatorPackage : BaseReactPackage() {
   override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
-    return if (name == AdAggregatorModule.NAME) {
-      AdAggregatorModule(reactContext)
-    } else {
-      null
+    return when (name) {
+      PangleAdManagerModule.NAME -> PangleAdManagerModule(reactContext)
+      else -> null
     }
   }
 
   override fun getReactModuleInfoProvider(): ReactModuleInfoProvider {
     return ReactModuleInfoProvider {
       val moduleInfos: MutableMap<String, ReactModuleInfo> = HashMap()
-      moduleInfos[AdAggregatorModule.NAME] = ReactModuleInfo(
-        AdAggregatorModule.NAME,
-        AdAggregatorModule.NAME,
+
+      moduleInfos[PangleAdManagerModule.NAME] = ReactModuleInfo(
+        PangleAdManagerModule.NAME,
+        PangleAdManagerModule.NAME,
         false,  // canOverrideExistingModule
         false,  // needsEagerInit
         false,  // isCxxModule
-        true // isTurboModule
+        false // isTurboModule (使用普通Module)
       )
       moduleInfos
     }
