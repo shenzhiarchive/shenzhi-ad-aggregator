@@ -6,24 +6,18 @@ buildscript {
   repositories {
     google()
     mavenCentral()
-    maven {
-      url "https://artifact.bytedance.com/repository/pangle"  //穿山甲融合SDK依赖
-    }
   }
 
   dependencies {
     classpath "com.android.tools.build:gradle:8.7.2"
     // noinspection DifferentKotlinGradleVersion
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${getExtOrDefault('kotlinVersion')}"
-    //Gromore自动拉取 Adapter AAR 插件脚本
-    classpath 'com.pangle.cn:mediation-auto-adapter:1.0.3'
   }
 }
 
 
 apply plugin: "com.android.library"
 apply plugin: "kotlin-android"
-apply plugin: "mediation-auto-adapter"
 
 apply plugin: "com.facebook.react"
 
@@ -48,9 +42,12 @@ android {
   buildTypes {
     debug {
       // Debug构建类型配置
+      debuggable true
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
     release {
-      minifyEnabled false
+      minifyEnabled true
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
   }
@@ -77,11 +74,9 @@ android {
 repositories {
   mavenCentral()
   google()
-  maven {
-    url "https://artifact.bytedance.com/repository/pangle"  //穿山甲融合SDK依赖
-  }
   flatDir {
-    dirs 'libs', 'libs/adapter', 'libs/adn'  //本地aar文件目录
+    //本地aar文件目录，使用相对路径（相对于build.gradle文件所在目录）
+    dirs 'libs', './libs/adapter', './libs/adn'
   }
 }
 
@@ -91,44 +86,25 @@ dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   
-  //穿山甲SDK必需依赖
+  //穿山甲SDK必需依赖（参考官方文档方式二）
   implementation 'com.squareup.okhttp3:okhttp:3.12.1'
   
-  //穿山甲融合SDK（Maven方式，官方推荐方式一）
-  implementation 'com.pangle.cn:mediation-sdk:7.2.0.9'
+  //导入libs目录下的所有jar文件
+  implementation fileTree(include: ['*.jar'], dir: 'libs')
+  
+  //导入libs目录下的aar文件（不包括测试工具）
+  implementation fileTree(include: ['*.aar'], dir: 'libs', exclude: ['tools-release.aar'])
+  
+  //导入adapter和adn目录下的所有aar文件
+  implementation fileTree(include: ['*.aar'], dir: 'libs/adapter')
+  implementation fileTree(include: ['*.aar'], dir: 'libs/adn')
   
   //穿山甲测试工具（仅在Debug构建中包含，Release构建自动排除）
-  //注意：生产环境打包时会自动排除，无需手动配置
-  debugImplementation(name: "tools-release", ext: 'aar')
-  
-  //---------- ADN SDK（本地aar方式，因为不是所有ADN都支持Maven）----------
-  //注意：使用api方式声明，既能让mediation-auto-adapter插件识别版本号，
-  //又能确保SDK被包含在库中供下游使用
-  //---------- GDT 优量汇 ----------
-  api(name: "GDTSDK.unionNormal.4.660.1530", ext: 'aar')
-  
-  //---------- Baidu 百度 ----------
-  api(name: "Baidu_MobAds_SDK_v9.423", ext: 'aar')
-  
-  //---------- KS 快手 ----------
-  api(name: "kssdk-ad-4.9.20.1", ext: 'aar')
-  
-  //---------- Sigmob ----------
-  api(name: "windAd-4.24.7", ext: 'aar')
-  api(name: "windAd-common-1.8.6", ext: 'aar')
+  debugImplementation fileTree(include: ['tools-release.aar'], dir: 'libs')
   
   //---------- AdMob ----------
-  // AdMob通过Maven方式引入，插件可以直接识别版本号
-  api 'com.google.android.gms:play-services-ads:17.2.0'
-  
-  //注意：Adapter将通过mediation-auto-adapter插件自动拉取匹配版本，无需手动引入
+  implementation("com.google.android.gms:play-services-ads:17.2.0") {
+    exclude group: 'com.android.support'
+  }
 }
 
-//配置自动适配ADN Adapter
-mediationAutoAdapter {
-  //自动适配所有adn adapter，默认值为true
-  autoUpdate true
-  
-  //配置需要自动适配的adn列表（插件会根据compileOnly声明的SDK版本自动匹配adapter）
-  autoUpdateAdn = ["gdt", "baidu", "ks", "admob", "sigmob"]
-}

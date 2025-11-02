@@ -17,6 +17,8 @@
   
   <application>
     <!-- 适配Android 7.0及以上版本，FileProvider配置 -->
+    <!-- 注意：${applicationId}会在构建时自动替换为应用的applicationId（包名），无需手动配置 -->
+    <!-- 如果应用已配置FileProvider，Android构建系统会自动合并配置 -->
     <provider
         android:name="androidx.core.content.FileProvider"
         android:authorities="${applicationId}.fileprovider"
@@ -28,7 +30,8 @@
     </provider>
     
     <!-- 穿山甲SDK必需配置：TTMultiProvider -->
-    <!-- 注意：${applicationId}必须与开发者包名保持一致，否则会引发崩溃问题 -->
+    <!-- 注意：${applicationId}会在构建时自动替换为应用的applicationId（包名） -->
+    <!-- 此Provider为穿山甲SDK必需，如果应用已配置相同authorities的Provider，构建系统会自动处理 -->
     <provider
         android:name="com.bytedance.sdk.openadsdk.multipro.TTMultiProvider"
         android:authorities="${applicationId}.TTMultiProvider"

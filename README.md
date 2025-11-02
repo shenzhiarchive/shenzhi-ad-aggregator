@@ -32,12 +32,12 @@ yarn add @shenzhi/ad-aggregator
 
 安装后**无需额外配置**，所有穿山甲SDK依赖已内置在库中。
 
-本库采用**官方推荐的Maven方式（方式一）**（参考[穿山甲官方文档](https://www.csjplatform.com/supportcenter/5397)），并结合**自动拉取Adapter AAR功能**（参考[自动拉取Adapter文档](https://bytedance.larkoffice.com/docx/VnXJdoYIroFxEkx2s5ActC9hnSb)），已包含以下配置：
+本库采用**官方推荐的方式二（本地aar方式）**（参考[穿山甲官方文档](https://www.csjplatform.com/supportcenter/5397)），参考官方demo项目配置，已包含以下配置：
 
-- ✅ 穿山甲融合SDK通过Maven自动拉取（7.2.0.9版本）
-- ✅ 已添加okhttp依赖（3.12.1版本，Maven方式）
+- ✅ 穿山甲融合SDK（7.2.0.9版本，本地aar方式）
+- ✅ 已添加okhttp依赖（3.12.1版本）
 - ✅ 所有ADN SDK已内置在`android/libs/adn`目录
-- ✅ ADN Adapter通过mediation-auto-adapter插件自动拉取匹配版本
+- ✅ 所有ADN Adapter已内置在`android/libs/adapter`目录，版本已匹配
 - ✅ 已配置FileProvider和TTMultiProvider
 - ✅ 已添加所有必要权限
 - ✅ 已配置ProGuard混淆规则
@@ -52,9 +52,51 @@ yarn add @shenzhi/ad-aggregator
 
 2. **权限配置**：本库已自动包含所有必要权限，应用需要在运行时动态请求相关权限
 
-3. **Provider配置**：本库已自动配置FileProvider和TTMultiProvider，无需额外配置
+3. **Provider配置**：
+   - 本库已自动配置FileProvider和TTMultiProvider
+   - **重要**：`${applicationId}`占位符会在构建时**自动替换为应用的applicationId（包名）**，无需手动配置
+   - 如果应用已配置FileProvider，Android构建系统会自动合并配置
+   - 如果出现Provider冲突，请检查应用的AndroidManifest.xml，确保authorities不重复
 
 4. **混淆配置**：本库已包含ProGuard规则，会自动应用到你的项目中
+
+#### applicationId说明
+
+**重要说明**：本库的AndroidManifest.xml中使用了`${applicationId}`占位符：
+
+- ✅ **自动替换**：Android构建系统会在编译时自动将`${applicationId}`替换为**你的应用的applicationId（包名）**
+- ✅ **无需配置**：你不需要在库中或应用中做任何额外配置
+- ✅ **自动合并**：如果应用已配置FileProvider，构建系统会自动合并配置
+
+**Provider配置示例**（库中已配置，应用无需修改）：
+```xml
+<!-- 库中的配置会自动使用应用的applicationId -->
+<provider
+    android:authorities="${applicationId}.fileprovider"
+    ... />
+    
+<provider
+    android:authorities="${applicationId}.TTMultiProvider"
+    ... />
+```
+
+**如果出现Manifest合并冲突**：
+
+常见的冲突包括：
+- `android:allowBackup`：穿山甲SDK默认值为`true`，如果应用设置为`false`会有冲突
+- Provider的`android:authorities`：如果应用已配置相同authorities的Provider
+
+**解决方法**：在应用的`android/app/src/main/AndroidManifest.xml`的`<application>`标签中添加：
+```xml
+<application
+    ...
+    tools:replace="android:allowBackup">
+```
+
+如果需要替换多个属性，可以用逗号分隔：
+```xml
+tools:replace="android:allowBackup,android:authorities"
+```
 
 #### 项目build.gradle配置
 
@@ -65,7 +107,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url "https://artifact.bytedance.com/repository/pangle" }
     }
 }
 ```
@@ -74,25 +115,17 @@ allprojects {
 
 本库已包含以下依赖：
 
-**Maven方式（自动拉取）：**
-- ✅ okhttp3:okhttp:3.12.1（穿山甲SDK必需）
-- ✅ com.pangle.cn:mediation-sdk:7.2.0.9（穿山甲融合SDK）
-
-**本地aar方式：**
+**本地aar方式（方式二）：**
+- ✅ 穿山甲融合SDK：open_ad_sdk_7.2.0.9.aar
+- ✅ okhttp3:okhttp:3.12.1（穿山甲SDK必需，Maven方式）
 - ✅ 所有ADN SDK（GDT、百度、快手、Sigmob）
+- ✅ 所有ADN Adapter（已与SDK版本匹配）
 - ✅ 测试工具（tools-release.aar，仅在Debug构建中包含，Release构建自动排除）
 
-**自动拉取（无需手动配置）：**
-- ✅ 所有ADN Adapter通过mediation-auto-adapter插件自动拉取匹配版本
-
-#### 自动拉取Adapter说明
-
-本库已配置mediation-auto-adapter插件（参考[官方文档](https://bytedance.larkoffice.com/docx/VnXJdoYIroFxEkx2s5ActC9hnSb)），会自动：
-- 检测已引入的ADN SDK版本（通过本地aar文件名识别）
-- 自动从Maven仓库下载匹配的Adapter版本
-- 无需手动管理Adapter依赖
-
-**注意：** 使用本地aar文件时，确保aar文件名格式正确（包含版本号），插件才能正确识别版本并自动匹配adapter。
+**配置说明：**
+- 所有SDK和Adapter均采用本地aar方式引入，参考官方demo项目配置
+- 使用`fileTree`方式自动引入libs目录下的所有aar和jar文件
+- 测试工具（tools-release.aar）仅在Debug构建中包含，Release构建自动排除
 
 ### iOS配置
 
