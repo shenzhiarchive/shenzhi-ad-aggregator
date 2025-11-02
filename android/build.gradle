@@ -76,7 +76,6 @@ android {
         "generated/java",
         "generated/jni"
       ]
-      jniLibs.srcDirs = ['libs', 'libs/adapter', 'libs/adn']
     }
   }
 }
@@ -84,8 +83,13 @@ android {
 repositories {
   mavenCentral()
   google()
-
-  // 使用 flatDir 来解析本地 AAR 文件
+  
+  // 穿山甲 SDK Maven 仓库
+  maven {
+    url 'https://artifact.bytedance.com/repository/pangle'
+  }
+  
+  // 本地 AAR 文件仓库（用于 ADN SDK）
   flatDir {
     dirs 'libs', 'libs/adapter', 'libs/adn'
   }
@@ -101,53 +105,85 @@ dependencies {
   //穿山甲SDK必需依赖
   implementation 'com.squareup.okhttp3:okhttp:3.12.1'
 
+  // AndroidX 兼容性依赖（用于支持可能需要Support Library的SDK）
+  implementation 'androidx.core:core:1.13.1'
+  implementation 'androidx.appcompat:appcompat:1.6.1'
+
+  // AdMob SDK（注意：文档要求 <= 17.2.0，暂不支持Androidx版本）
   implementation("com.google.android.gms:play-services-ads:17.2.0") {
     exclude group: 'com.android.support'
   }
-  implementation(name: "Baidu_MobAds_SDK_v9.423", ext: 'aar')
-  implementation(name: "GDTSDK.unionNormal.4.660.1530", ext: 'aar')
-  implementation(name: "kssdk-ad-4.9.20.1", ext: 'aar')
-  implementation(name: "windAd-4.24.7", ext: 'aar')
-  implementation(name: "windAd-common-1.8.6", ext: 'aar')
-  implementation(name: "mediation_admob_adapter_17.2.0.71", ext: 'aar')
-  implementation(name: "mediation_baidu_adapter_9.423.1", ext: 'aar')
-  implementation(name: "mediation_gdt_adapter_4.660.1530.1", ext: 'aar')
-  implementation(name: "mediation_ks_adapter_4.9.20.1.1", ext: 'aar')
-  implementation(name: "mediation_sigmob_adapter_4.24.7.1", ext: 'aar')
+  
+  // 融合SDK - 使用 Maven 方式引入（最新版本 7.2.0.9）
+  implementation "com.pangle_beta.cn:mediation-sdk:7.2.0.9"  // 融合SDK
+  
+  // Adapter - 使用 Maven 方式引入（最新版本）
+  implementation "com.pangle_beta.cn:mediation-admob-adapter:17.2.0.71"  // admob adapter
+  implementation "com.pangle_beta.cn:mediation-baidu-adapter:9.423.1"  // baidu adapter
+  implementation "com.pangle_beta.cn:mediation-gdt-adapter:4.660.1530.1"  // gdt adapter
+  implementation "com.pangle_beta.cn:mediation-ks-adapter:4.9.20.1.1"  // ks adapter
+  implementation "com.pangle_beta.cn:mediation-sigmob-adapter:4.24.7.1"  // sigmob adapter
+  
+  // 测试工具（仅在 Debug 构建中包含）
+  debugImplementation "com.pangle_beta.cn:mediation-test-tools:7.2.0.9"  // 测试工具
+  
+  // ADN SDK - 混合方式引入（GDT 使用 Maven，其他使用本地 AAR）
+  // GDT SDK - 通过 Maven 引入
+  implementation "com.qq.e.union:union:4.660.1530"  // GDT SDK
+  
+  // 其他 ADN SDK - 使用本地 AAR（因为这些 SDK 不在 Maven 仓库中）
+  implementation(name: "Baidu_MobAds_SDK_v9.423", ext: 'aar')  // Baidu SDK
+  implementation(name: "kssdk-ad-4.9.20.1", ext: 'aar')  // KS SDK
+  implementation(name: "windAd-4.24.7", ext: 'aar')  // Sigmob SDK
+  implementation(name: "windAd-common-1.8.6", ext: 'aar')  // Sigmob Common SDK
 
   implementation fileTree(include: ['*.jar'], dir: 'libs')
   androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
     exclude group: 'com.android.support', module: 'support-annotations'
   })
-
-  implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
-  implementation 'com.squareup.okhttp3:okhttp:3.12.1'
-  implementation "com.android.support:appcompat-v7:28.0.0"
-  implementation "com.android.support:support-annotations:28.0.0"
-  implementation "com.android.support:support-v4:28.0.0"
-  implementation "com.squareup.leakcanary:leakcanary-android-no-op:1.5.4"
-  implementation "com.android.support:recyclerview-v7:28.0.0"
-  implementation 'com.android.support:multidex:1.0.3'
-  implementation 'com.android.support.constraint:constraint-layout:2.0.4'
-
-  implementation(name: 'open_ad_sdk', ext: 'aar')
+  // implementation "com.android.support:appcompat-v7:28.0.0"
+  // implementation "com.android.support:support-annotations:28.0.0"
+  // implementation "com.android.support:support-v4:28.0.0"
+  // implementation "com.squareup.leakcanary:leakcanary-android-no-op:1.5.4"
+  // implementation "com.android.support:recyclerview-v7:28.0.0"
+  // implementation 'com.android.support:multidex:1.0.3'
+  // implementation 'com.android.support.constraint:constraint-layout:2.0.4'
 
 }
 
 
-// 自动配置根项目的repositories，确保用户项目也能访问libs目录下的AAR文件
+// 自动配置根项目的repositories，确保用户项目也能访问Maven仓库和本地AAR文件
 // 当npm包安装后，此配置会自动在用户项目的gradle构建中生效
 def libsDir = file('libs')
 def adapterDir = file('libs/adapter')
 def adnDir = file('libs/adn')
 
-// 使用gradle.projectsEvaluated确保在所有项目评估完成后配置
-// 这样确保所有子项目（包括用户的主app项目）都能访问libs目录下的AAR文件
 gradle.projectsEvaluated {
   rootProject.allprojects { project ->
-    if (libsDir.exists()) {
-      project.repositories {
-        // 检查是否已经配置了相同的flatDir（避免重复配置）
+    project.repositories {
+      // 配置穿山甲 SDK Maven 仓库
+      def hasPangleMaven = false
+      project.repositories.each { repo ->
+        try {
+          // 检查是否是 Maven 仓库类型
+          if (repo.class.name.contains('MavenArtifactRepository')) {
+            def url = repo.getUrl()?.toString()
+            if (url && url.contains('artifact.bytedance.com/repository/pangle')) {
+              hasPangleMaven = true
+            }
+          }
+        } catch (Exception e) {
+          // 忽略检查错误
+        }
+      }
+      if (!hasPangleMaven) {
+        maven {
+          url 'https://artifact.bytedance.com/repository/pangle'
+        }
+      }
+      
+      // 配置本地 AAR 文件的 flatDir（用于 ADN SDK）
+      if (libsDir.exists()) {
         def hasFlatDir = false
         project.repositories.each { repo ->
           // 检查是否是flatDir类型的仓库

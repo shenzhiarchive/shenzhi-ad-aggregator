@@ -21,4 +21,11 @@
         <item name="android:backgroundDimEnabled">true</item>
     </style>
 
+    <!-- Sigmob SDK 需要的透明样式 -->
+    <style name="sig_transparent_style" parent="android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
 </resources>

@@ -32,8 +32,6 @@ yarn add @shenzhi/ad-aggregator
 
 安装后**无需额外配置**，所有穿山甲SDK依赖已内置在库中。
 
-本库采用**官方推荐的方式二（本地aar方式）**（参考[穿山甲官方文档](https://www.csjplatform.com/supportcenter/5397)），参考官方demo项目配置，已包含以下配置：
-
 - ✅ 穿山甲融合SDK（7.2.0.9版本，本地aar方式）
 - ✅ 已添加okhttp依赖（3.12.1版本）
 - ✅ 所有ADN SDK已内置在`android/libs/adn`目录
@@ -60,43 +58,7 @@ yarn add @shenzhi/ad-aggregator
 
 4. **混淆配置**：本库已包含ProGuard规则，会自动应用到你的项目中
 
-#### applicationId说明
 
-**重要说明**：本库的AndroidManifest.xml中使用了`${applicationId}`占位符：
-
-- ✅ **自动替换**：Android构建系统会在编译时自动将`${applicationId}`替换为**你的应用的applicationId（包名）**
-- ✅ **无需配置**：你不需要在库中或应用中做任何额外配置
-- ✅ **自动合并**：如果应用已配置FileProvider，构建系统会自动合并配置
-
-**Provider配置示例**（库中已配置，应用无需修改）：
-```xml
-<!-- 库中的配置会自动使用应用的applicationId -->
-<provider
-    android:authorities="${applicationId}.fileprovider"
-    ... />
-    
-<provider
-    android:authorities="${applicationId}.TTMultiProvider"
-    ... />
-```
-
-**如果出现Manifest合并冲突**：
-
-常见的冲突包括：
-- `android:allowBackup`：穿山甲SDK默认值为`true`，如果应用设置为`false`会有冲突
-- Provider的`android:authorities`：如果应用已配置相同authorities的Provider
-
-**解决方法**：在应用的`android/app/src/main/AndroidManifest.xml`的`<application>`标签中添加：
-```xml
-<application
-    ...
-    tools:replace="android:allowBackup">
-```
-
-如果需要替换多个属性，可以用逗号分隔：
-```xml
-tools:replace="android:allowBackup,android:authorities"
-```
 
 #### 项目build.gradle配置
 
@@ -109,6 +71,14 @@ allprojects {
         mavenCentral()
     }
 }
+```
+#### 项目工程gradle.properties配置
+ - Automatically convert third-party libraries to use AndroidX
+
+```
+android.useAndroidX=true
+# Automatically convert third-party libraries to use AndroidX
+android.enableJetifier=true
 ```
 
 #### 依赖说明
@@ -139,7 +109,7 @@ allprojects {
 android {
     defaultConfig {
         // ... 其他配置 ...
-        
+
         // AdMob App ID配置
         manifestPlaceholders = [
             ADMOB_APP_ID: "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX" // 您的真实App ID
@@ -161,7 +131,7 @@ android {
     defaultConfig {
         applicationId "com.your.app"
         // ... 其他配置 ...
-        
+
         manifestPlaceholders = [
             ADMOB_APP_ID: "ca-app-pub-3940256099942544~3347511713" // 测试App ID
             // 生产环境请替换为：

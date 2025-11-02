@@ -11,7 +11,8 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:supportsRtl="true"
-      tools:replace="android:allowBackup">
+      android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+      tools:replace="android:allowBackup,android:appComponentFactory">
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
