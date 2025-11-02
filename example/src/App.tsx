@@ -13,7 +13,6 @@ export default function App() {
     // 等待 React Native 完全初始化后再调用原生模块
     isSdkReady()
       .then((res) => {
-        console.log(res);
         if (res) {
           setIsReady(res);
         } else {
@@ -22,16 +21,15 @@ export default function App() {
           };
           initMediationAdSdk(params)
             .then((result) => {
-              console.log(result);
               setIsReady(result);
             })
             .catch((err) => {
-              console.log(err);
+              console.log('initMediationAdSdk', err);
             });
         }
       })
       .catch((e) => {
-        console.error(e);
+        console.error('isSdkReady', e);
       });
   }, []);
   return (
