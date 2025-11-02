@@ -12,6 +12,7 @@ buildscript {
     classpath "com.android.tools.build:gradle:8.7.2"
     // noinspection DifferentKotlinGradleVersion
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${getExtOrDefault('kotlinVersion')}"
+
   }
 }
 
@@ -60,6 +61,8 @@ android {
 
   lintOptions {
     disable "GradleCompatible"
+    // 禁用 flatDir 警告 - 这是 React Native 库项目中处理本地 AAR 的标准做法
+    disable "FlatDirRepository"
   }
 
   compileOptions {
@@ -73,6 +76,7 @@ android {
         "generated/java",
         "generated/jni"
       ]
+      jniLibs.srcDirs = ['libs', 'libs/adapter', 'libs/adn']
     }
   }
 }
@@ -80,13 +84,15 @@ android {
 repositories {
   mavenCentral()
   google()
+
+  // 使用 flatDir 来解析本地 AAR 文件
   flatDir {
-    //本地aar文件目录，使用相对路径（相对于build.gradle文件所在目录）
-    dirs 'libs', './libs/adapter', './libs/adn'
+    dirs 'libs', 'libs/adapter', 'libs/adn'
   }
 }
 
 def kotlin_version = getExtOrDefault("kotlinVersion")
+
 
 dependencies {
   implementation "com.facebook.react:react-android"
@@ -95,39 +101,72 @@ dependencies {
   //穿山甲SDK必需依赖
   implementation 'com.squareup.okhttp3:okhttp:3.12.1'
 
-  //导入libs目录下的所有jar文件
-  implementation fileTree(include: ['*.jar'], dir: 'libs')
-
-  //融合基础包
-  implementation(name: "open_ad_sdk_7.2.0.9", ext: 'aar')
-
-  //ks
-  implementation(name: "mediation_ks_adapter_4.9.20.1.1", ext: 'aar')
-  implementation(name: "kssdk-ad-4.9.20.1", ext: 'aar')
-
-  //baidu
-  implementation(name: "mediation_baidu_adapter_9.423.1", ext: 'aar')
+  implementation("com.google.android.gms:play-services-ads:17.2.0") {
+    exclude group: 'com.android.support'
+  }
   implementation(name: "Baidu_MobAds_SDK_v9.423", ext: 'aar')
-
-  //gdt
-  implementation(name: "mediation_gdt_adapter_4.660.1530.1", ext: 'aar')
   implementation(name: "GDTSDK.unionNormal.4.660.1530", ext: 'aar')
-
-  //sigmob
-  implementation(name: "mediation_sigmob_adapter_4.24.7.1", ext: 'aar')
+  implementation(name: "kssdk-ad-4.9.20.1", ext: 'aar')
   implementation(name: "windAd-4.24.7", ext: 'aar')
   implementation(name: "windAd-common-1.8.6", ext: 'aar')
-
-  //admob 
   implementation(name: "mediation_admob_adapter_17.2.0.71", ext: 'aar')
-  implementation("com.google.android.gms:play-services-ads:17.2.0") {
-      exclude group: 'com.android.support'
-  }
+  implementation(name: "mediation_baidu_adapter_9.423.1", ext: 'aar')
+  implementation(name: "mediation_gdt_adapter_4.660.1530.1", ext: 'aar')
+  implementation(name: "mediation_ks_adapter_4.9.20.1.1", ext: 'aar')
+  implementation(name: "mediation_sigmob_adapter_4.24.7.1", ext: 'aar')
 
-  //穿山甲测试工具（仅在Debug构建中包含，Release构建自动排除）
-  debugImplementation fileTree(include: ['tools-release.aar'], dir: 'libs')
+  implementation fileTree(include: ['*.jar'], dir: 'libs')
+  androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
+    exclude group: 'com.android.support', module: 'support-annotations'
+  })
 
-  //---------- 旧版 SDK 兼容性依赖 ----------
-  implementation 'com.android.support:support-v4:28.0.0'
+  implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+  implementation 'com.squareup.okhttp3:okhttp:3.12.1'
+  implementation "com.android.support:appcompat-v7:28.0.0"
+  implementation "com.android.support:support-annotations:28.0.0"
+  implementation "com.android.support:support-v4:28.0.0"
+  implementation "com.squareup.leakcanary:leakcanary-android-no-op:1.5.4"
+  implementation "com.android.support:recyclerview-v7:28.0.0"
+  implementation 'com.android.support:multidex:1.0.3'
+  implementation 'com.android.support.constraint:constraint-layout:2.0.4'
+
+  implementation(name: 'open_ad_sdk', ext: 'aar')
+
 }
 
+
+// 自动配置根项目的repositories，确保用户项目也能访问libs目录下的AAR文件
+// 当npm包安装后，此配置会自动在用户项目的gradle构建中生效
+def libsDir = file('libs')
+def adapterDir = file('libs/adapter')
+def adnDir = file('libs/adn')
+
+// 使用gradle.projectsEvaluated确保在所有项目评估完成后配置
+// 这样确保所有子项目（包括用户的主app项目）都能访问libs目录下的AAR文件
+gradle.projectsEvaluated {
+  rootProject.allprojects { project ->
+    if (libsDir.exists()) {
+      project.repositories {
+        // 检查是否已经配置了相同的flatDir（避免重复配置）
+        def hasFlatDir = false
+        project.repositories.each { repo ->
+          // 检查是否是flatDir类型的仓库
+          if (repo.class.simpleName == 'FlatDirectoryArtifactRepository' ||
+            repo.class.name.contains('FlatDirectory')) {
+            def dirs = repo.dirs
+            if (dirs && (dirs.contains(libsDir) || dirs.contains(adapterDir) || dirs.contains(adnDir))) {
+              hasFlatDir = true
+            }
+          }
+        }
+
+        // 如果还没有配置，则添加flatDir
+        if (!hasFlatDir) {
+          flatDir {
+            dirs libsDir, adapterDir, adnDir
+          }
+        }
+      }
+    }
+  }
+}
