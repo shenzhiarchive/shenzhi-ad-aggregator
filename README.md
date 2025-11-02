@@ -85,7 +85,6 @@ android.enableJetifier=true
 
 本库已包含以下依赖：
 
-**本地aar方式（方式二）：**
 - ✅ 穿山甲融合SDK：open_ad_sdk_7.2.0.9.aar
 - ✅ okhttp3:okhttp:3.12.1（穿山甲SDK必需，Maven方式）
 - ✅ 所有ADN SDK（GDT、百度、快手、Sigmob）
