@@ -4,6 +4,7 @@ import {
   type InitConfig,
   initMediationAdSdk,
   isSdkReady,
+  BannerAdView,
 } from '@shenzhi/ad-aggregator';
 
 export default function App() {
@@ -35,6 +36,15 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text>Result: {isReady ? '初始化' : '没有初始化'}</Text>
+      {isReady && (
+        <BannerAdView
+          codeId="103503633"
+          adSize={{ width: 320, height: 50 }}
+          onAdClicked={() => console.log('Ad clicked')}
+          onAdShow={() => console.log('Ad shown')}
+          onError={(error) => console.log('Error:', error)}
+        />
+      )}
     </View>
   );
 }

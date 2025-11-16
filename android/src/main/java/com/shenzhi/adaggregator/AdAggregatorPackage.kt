@@ -5,6 +5,8 @@ import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.model.ReactModuleInfo
 import com.facebook.react.module.model.ReactModuleInfoProvider
+import com.facebook.react.uimanager.ViewManager
+import com.shenzhi.adaggregator.banner.BannerAdViewManager
 import java.util.HashMap
 
 class AdAggregatorPackage : BaseReactPackage() {
@@ -29,5 +31,11 @@ class AdAggregatorPackage : BaseReactPackage() {
       )
       moduleInfos
     }
+  }
+  
+  override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
+    return listOf(
+      BannerAdViewManager()
+    )
   }
 }
