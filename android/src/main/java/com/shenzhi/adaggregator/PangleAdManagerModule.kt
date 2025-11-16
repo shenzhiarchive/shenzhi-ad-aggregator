@@ -1,15 +1,11 @@
 package com.shenzhi.adaggregator
 
-import android.os.Handler
-import android.os.Looper
 import com.facebook.react.bridge.*
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.turbomodule.core.interfaces.TurboModule
-import com.bytedance.sdk.openadsdk.TTAdConfig
-import com.bytedance.sdk.openadsdk.TTAdSdk
 import com.bytedance.sdk.openadsdk.TTAdManager
 import com.bytedance.sdk.openadsdk.TTCustomController
-import com.bytedance.sdk.openadsdk.mediation.IMediationManager
+import com.shenzhi.adaggregator.core.ADCore
 import com.bytedance.sdk.openadsdk.mediation.init.MediationConfigUserInfoForSegment
 import com.bytedance.sdk.openadsdk.mediation.init.MediationPrivacyConfig
 import java.util.HashMap
@@ -22,9 +18,6 @@ import java.util.HashMap
 class PangleAdManagerModule(reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext), TurboModule {
 
-    private var isInitialized = false
-    private var mediationManager: IMediationManager? = null
-
     override fun getName(): String {
         return NAME
     }
@@ -33,7 +26,7 @@ class PangleAdManagerModule(reactContext: ReactApplicationContext) :
      * 获取TTAdManager实例
      */
     fun get(): TTAdManager? {
-      return TTAdSdk.getAdManager()
+        return ADCore.getTTAdManager()
     }
     /**
      * 初始化穿山甲融合SDK
@@ -43,11 +36,6 @@ class PangleAdManagerModule(reactContext: ReactApplicationContext) :
      */
     @ReactMethod
     fun initMediationAdSdk(config: ReadableMap, promise: Promise) {
-        if (isInitialized) {
-            promise.resolve(true)
-            return
-        }
-
         try {
             // 解析配置参数
             val appId = config.getString("appId") ?: run {
@@ -70,102 +58,37 @@ class PangleAdManagerModule(reactContext: ReactApplicationContext) :
             val limitPersonalAds = if (config.hasKey("limitPersonalAds")) config.getBoolean("limitPersonalAds") else false
             val limitProgrammaticAds = if (config.hasKey("limitProgrammaticAds")) config.getBoolean("limitProgrammaticAds") else false
 
-            // 在主线程中调用初始化
-            Handler(Looper.getMainLooper()).post {
-                try {
-                    // 构建TTAdConfig
-                    val adConfig = TTAdConfig.Builder()
-                        .appId(appId)
-                        .useMediation(true) // 开启聚合功能
-                        .supportMultiProcess(supportMultiProcess)
-                        .debug(debug)
-                        .titleBarTheme(themeStatus)
-                        .customController(createCustomController(
-                            allowLocation,
-                            allowPhoneState,
-                            allowWifiState,
-                            allowAndroidId,
-                            allowWriteExternal,
-                            limitPersonalAds,
-                            limitProgrammaticAds
-                        ))
-                        .build()
-                    // 初始化SDK
-                    TTAdSdk.init(reactApplicationContext, adConfig)
-                    // 启动SDK
-                    TTAdSdk.start(object : TTAdSdk.Callback {
-                        override fun success() {
-                            isInitialized = true
-                            // 保存初始化后的实例
-                            mediationManager = TTAdSdk.getMediationManager()
+            // 构建 ADCore 配置
+            val adCoreConfig = ADCore.InitConfig(
+                appId = appId,
+                debug = debug,
+                supportMultiProcess = supportMultiProcess,
+                allowLocation = allowLocation,
+                allowPhoneState = allowPhoneState,
+                allowWifiState = allowWifiState,
+                allowAndroidId = allowAndroidId,
+                allowWriteExternal = allowWriteExternal,
+                themeStatus = themeStatus,
+                limitPersonalAds = limitPersonalAds,
+                limitProgrammaticAds = limitProgrammaticAds
+            )
 
-                            // 注意：回调在子线程，需要切换到主线程进行UI操作
-                            Handler(Looper.getMainLooper()).post {
-                                promise.resolve(true)
-                            }
-                        }
+            // 调用 ADCore 进行初始化
+            ADCore.init(
+                context = reactApplicationContext,
+                config = adCoreConfig,
+                callback = object : ADCore.InitCallback {
+                    override fun onSuccess() {
+                        promise.resolve(true)
+                    }
 
-                        override fun fail(code: Int, msg: String) {
-                            Handler(Looper.getMainLooper()).post {
-                                promise.reject("INIT_FAILED", "初始化失败: code=$code, msg=$msg", null)
-                            }
-                        }
-                    })
-                } catch (e: Exception) {
-                    Handler(Looper.getMainLooper()).post {
-                        promise.reject("INIT_EXCEPTION", "初始化异常: ${e.message}", e)
+                    override fun onFail(code: Int, msg: String) {
+                        promise.reject("INIT_FAILED", "初始化失败: code=$code, msg=$msg", null)
                     }
                 }
-            }
+            )
         } catch (e: Exception) {
             promise.reject("INVALID_CONFIG", "配置解析失败: ${e.message}", e)
-        }
-    }
-
-    /**
-     * 创建自定义控制器，用于隐私设置
-     */
-    private fun createCustomController(
-        allowLocation: Boolean,
-        allowPhoneState: Boolean,
-        allowWifiState: Boolean,
-        allowAndroidId: Boolean,
-        allowWriteExternal: Boolean,
-        limitPersonalAds: Boolean,
-        limitProgrammaticAds: Boolean
-    ): TTCustomController {
-        return object : TTCustomController() {
-            override fun isCanUseLocation(): Boolean {
-                return allowLocation
-            }
-
-            override fun isCanUsePhoneState(): Boolean {
-                return allowPhoneState
-            }
-
-            override fun isCanUseWifiState(): Boolean {
-                return allowWifiState
-            }
-
-            override fun isCanUseAndroidId(): Boolean {
-                return allowAndroidId
-            }
-
-            override fun isCanUseWriteExternal(): Boolean {
-                return allowWriteExternal
-            }
-
-            override fun getMediationPrivacyConfig(): MediationPrivacyConfig {
-                return object : MediationPrivacyConfig() {
-                    override fun isLimitPersonalAds(): Boolean {
-                        return limitPersonalAds
-                    }
-
-                    override fun isProgrammaticRecommend(): Boolean {
-                        return !limitProgrammaticAds
-                    }
-                }
-            }
         }
     }
 
@@ -174,15 +97,14 @@ class PangleAdManagerModule(reactContext: ReactApplicationContext) :
      */
     @ReactMethod
     fun isSdkReady(promise: Promise) {
-        promise.resolve(isInitialized && TTAdSdk.isSdkReady())
+        promise.resolve(ADCore.isSdkReady())
     }
-
 
     /**
      * 检查是否已初始化
      */
     fun isInitialized(): Boolean {
-        return isInitialized
+        return ADCore.isInitialized()
     }
 
     /**
@@ -190,9 +112,8 @@ class PangleAdManagerModule(reactContext: ReactApplicationContext) :
      * 当模块被销毁时调用
      */
     override fun invalidate() {
-        // 清理资源
-        isInitialized = false
-        mediationManager = null
+        // ADCore 是单例，不需要在这里清理
+        // 如果需要重置，可以调用 ADCore.reset()
     }
 
 
