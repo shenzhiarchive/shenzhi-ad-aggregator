@@ -32,10 +32,11 @@ class AdAggregatorPackage : BaseReactPackage() {
       moduleInfos
     }
   }
-  
+
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
+    // 使用单例模式防止热重载时重复注册
     return listOf(
-      BannerAdViewManager()
+      BannerAdViewManager.getInstance()
     )
   }
 }

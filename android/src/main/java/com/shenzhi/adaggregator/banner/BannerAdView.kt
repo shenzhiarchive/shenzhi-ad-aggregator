@@ -3,265 +3,287 @@ package com.shenzhi.adaggregator.banner
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
 import com.bytedance.sdk.openadsdk.AdSlot
 import com.bytedance.sdk.openadsdk.TTAdDislike
 import com.bytedance.sdk.openadsdk.TTAdNative
-import com.bytedance.sdk.openadsdk.TTAdSdk
 import com.bytedance.sdk.openadsdk.TTNativeExpressAd
-import com.bytedance.sdk.openadsdk.mediation.ad.MediationAdEcpmInfo
-import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.WritableMap
+import com.facebook.react.uimanager.ThemedReactContext
+import com.facebook.react.uimanager.events.RCTEventEmitter
 import com.shenzhi.adaggregator.core.ADCore
 import com.shenzhi.adaggregator.utils.UIUtils
 
 /**
- * Banner广告View
- * 用于展示穿山甲Banner广告
+ * Banner广告View组件
+ * 基于穿山甲融合SDK实现Banner广告展示
  */
 class BannerAdView(context: Context) : FrameLayout(context) {
-    
+
     companion object {
         private const val TAG = "BannerAdView"
     }
-    
+
+    private val reactContext: ThemedReactContext = context as ThemedReactContext
     private var codeId: String? = null
-    private var width: Int = 0
-    private var height: Int = 0
-    private var bannerAd: TTNativeExpressAd? = null
+    private var adWidth: Int = 0
+    private var adHeight: Int = 0
+    
     private var adNativeLoader: TTAdNative? = null
+    private var bannerAd: TTNativeExpressAd? = null
+    private var bannerContainer: FrameLayout? = null
     private var isAdLoaded = false
-    
-    // 事件回调
-    private var onAdClickedCallback: (() -> Unit)? = null
-    private var onAdShowCallback: (() -> Unit)? = null
-    private var onRenderFailCallback: ((code: Int, msg: String) -> Unit)? = null
-    private var onRenderSuccessCallback: ((width: Float, height: Float) -> Unit)? = null
-    private var onDislikeCallback: ((position: Int, value: String) -> Unit)? = null
-    private var onErrorCallback: ((code: Int, msg: String) -> Unit)? = null
-    
+
     init {
-        // 初始化容器
-        layoutParams = LayoutParams(
-            LayoutParams.MATCH_PARENT,
-            LayoutParams.WRAP_CONTENT
+        // 加载布局文件
+        val layoutId = context.resources.getIdentifier(
+            "mediation_activity_banner",
+            "layout",
+            context.packageName
         )
+        
+        if (layoutId == 0) {
+            Log.e(TAG, "mediation_activity_banner layout not found, creating default container")
+            // 如果找不到布局文件，创建一个默认的FrameLayout容器
+            bannerContainer = FrameLayout(context).apply {
+                layoutParams = LayoutParams(
+                    LayoutParams.MATCH_PARENT,
+                    LayoutParams.MATCH_PARENT
+                )
+            }
+            addView(bannerContainer)
+        } else {
+            val inflater = LayoutInflater.from(context)
+            val rootView = inflater.inflate(layoutId, this, true)
+            
+            // 获取banner容器
+            val containerId = context.resources.getIdentifier(
+                "banner_container",
+                "id",
+                context.packageName
+            )
+            
+            if (containerId != 0) {
+                bannerContainer = rootView.findViewById(containerId) as? FrameLayout
+            }
+            
+            // 如果找不到容器，使用根布局
+            if (bannerContainer == null) {
+                Log.w(TAG, "banner_container not found, using root view")
+                bannerContainer = this
+            }
+        }
     }
-    
+
     /**
      * 设置广告位ID
      */
-    fun setCodeId(codeId: String) {
-        if (this.codeId != codeId) {
-            this.codeId = codeId
-            // 如果已经设置了尺寸，则自动加载广告
-            if (width > 0 && height > 0) {
-                loadAd()
-            }
+    fun setCodeId(codeId: String?) {
+        if (this.codeId == codeId) {
+            return
+        }
+        this.codeId = codeId
+        if (!codeId.isNullOrEmpty()) {
+            loadAd()
+        } else {
+            destroyAd()
         }
     }
-    
+
     /**
-     * 设置广告尺寸（单位：dp）
+     * 设置广告尺寸
      */
-    fun setAdSize(widthDp: Float, heightDp: Float) {
-        val widthPx = UIUtils.dp2px(context, widthDp)
-        val heightPx = UIUtils.dp2px(context, heightDp)
+    fun setAdSize(width: Float, height: Float) {
+        val widthPx = UIUtils.dp2px(context, width).toInt()
+        val heightPx = UIUtils.dp2px(context, height).toInt()
         
-        if (this.width != widthPx || this.height != heightPx) {
-            this.width = widthPx
-            this.height = heightPx
-            // 如果已经设置了codeId，则自动加载广告
-            if (!codeId.isNullOrEmpty()) {
+        if (adWidth != widthPx || adHeight != heightPx) {
+            adWidth = widthPx
+            adHeight = heightPx
+            // 如果广告已加载，重新加载
+            if (isAdLoaded && !codeId.isNullOrEmpty()) {
                 loadAd()
             }
         }
     }
-    
-    /**
-     * 设置广告尺寸（单位：px）
-     */
-    fun setAdSizePx(widthPx: Int, heightPx: Int) {
-        if (this.width != widthPx || this.height != heightPx) {
-            this.width = widthPx
-            this.height = heightPx
-            // 如果已经设置了codeId，则自动加载广告
-            if (!codeId.isNullOrEmpty()) {
-                loadAd()
-            }
-        }
-    }
-    
+
     /**
      * 加载广告
      */
     fun loadAd() {
         if (codeId.isNullOrEmpty()) {
             Log.w(TAG, "codeId is empty, cannot load ad")
-            onErrorCallback?.invoke(-1, "codeId is empty")
             return
         }
-        
-        if (width <= 0 || height <= 0) {
-            Log.w(TAG, "ad size is invalid, cannot load ad")
-            onErrorCallback?.invoke(-1, "ad size is invalid")
+
+        if (adWidth <= 0 || adHeight <= 0) {
+            Log.w(TAG, "adSize is invalid, cannot load ad")
             return
         }
-        
+
+        // 检查SDK是否已初始化
         if (!ADCore.isSdkReady()) {
-            Log.w(TAG, "SDK is not ready, cannot load ad")
-            onErrorCallback?.invoke(-1, "SDK is not ready")
+            Log.e(TAG, "SDK is not ready, please initialize SDK first")
+            sendErrorEvent(-1, "SDK未初始化，请先初始化SDK")
             return
         }
-        
-        // 销毁之前的广告
-        destroyAd()
-        
+
+        // 获取TTAdManager并创建TTAdNative
         val adManager = ADCore.getTTAdManager()
         if (adManager == null) {
             Log.e(TAG, "TTAdManager is null")
-            onErrorCallback?.invoke(-1, "TTAdManager is null")
+            sendErrorEvent(-1, "TTAdManager未初始化")
             return
         }
-        
-        // 创建TTAdNative对象
-        adNativeLoader = adManager.createAdNative(context)
-        
+
+        val activity = reactContext.currentActivity
+        if (activity == null) {
+            Log.e(TAG, "Activity is null")
+            sendErrorEvent(-1, "Activity为空")
+            return
+        }
+
+        // 销毁之前的广告
+        destroyAd()
+
+        // 创建TTAdNative对象（保证每次请求的广告对象为新的广告对象）
+        adNativeLoader = adManager.createAdNative(activity)
+
         // 创建AdSlot
         val adSlot = AdSlot.Builder()
             .setCodeId(codeId!!)
-            .setImageAcceptedSize(width, height) // 自渲染尺寸，单位px
+            .setImageAcceptedSize(adWidth, adHeight) // 自渲染尺寸，单位px
             .setExpressViewAcceptedSize(UIUtils.getScreenWidthDp(context), 0f) // 模板广告尺寸，单位dp
             .build()
-        
+
         // 加载广告
         adNativeLoader?.loadBannerExpressAd(adSlot, object : TTAdNative.NativeExpressAdListener {
-            override fun onError(code: Int, msg: String) {
-                Log.e(TAG, "banner load fail: errCode: $code, errMsg: $msg")
+            override fun onError(code: Int, message: String) {
+                Log.e(TAG, "Banner ad load failed: code=$code, message=$message")
                 isAdLoaded = false
-                onErrorCallback?.invoke(code, msg)
+                sendErrorEvent(code, message)
             }
-            
+
             override fun onNativeExpressAdLoad(ads: MutableList<TTNativeExpressAd>?) {
                 if (ads != null && ads.isNotEmpty()) {
-                    Log.d(TAG, "banner load success")
+                    Log.d(TAG, "Banner ad load success")
                     bannerAd = ads[0]
                     isAdLoaded = true
                     // 自动展示广告
                     showAd()
                 } else {
-                    Log.w(TAG, "banner load success, but list is null or empty")
+                    Log.w(TAG, "Banner ad load success, but list is null or empty")
                     isAdLoaded = false
-                    onErrorCallback?.invoke(-1, "banner load success, but list is null or empty")
+                    sendErrorEvent(-1, "广告加载成功但列表为空")
                 }
             }
         })
     }
-    
+
     /**
      * 展示广告
      */
     private fun showAd() {
-        val ad = bannerAd ?: return
-        
+        val ad = bannerAd ?: run {
+            Log.w(TAG, "Banner ad is null, cannot show")
+            return
+        }
+
+        val container = bannerContainer ?: run {
+            Log.w(TAG, "Banner container is null")
+            return
+        }
+
+        val activity = reactContext.currentActivity ?: run {
+            Log.w(TAG, "Activity is null")
+            return
+        }
+
         // 设置交互监听器
         ad.setExpressInteractionListener(object : TTNativeExpressAd.ExpressAdInteractionListener {
             override fun onAdClicked(view: View?, type: Int) {
-                Log.d(TAG, "banner clicked")
-                onAdClickedCallback?.invoke()
+                Log.d(TAG, "Banner ad clicked")
+                sendEvent("onAdClicked", null)
             }
-            
+
             override fun onAdShow(view: View?, type: Int) {
-                Log.d(TAG, "banner showed")
-                onAdShowCallback?.invoke()
+                Log.d(TAG, "Banner ad showed")
+                sendEvent("onAdShow", null)
             }
-            
+
             override fun onRenderFail(view: View?, msg: String?, code: Int) {
-                Log.e(TAG, "banner renderFail, errCode: $code, errMsg: $msg")
-                onRenderFailCallback?.invoke(code, msg ?: "unknown error")
+                Log.e(TAG, "Banner ad render failed: code=$code, message=$msg")
+                val eventData = Arguments.createMap().apply {
+                    putInt("code", code)
+                    putString("message", msg ?: "")
+                }
+                sendEvent("onRenderFail", eventData)
             }
-            
+
             override fun onRenderSuccess(view: View?, width: Float, height: Float) {
-                Log.d(TAG, "banner render success, width: $width, height: $height")
-                onRenderSuccessCallback?.invoke(width, height)
+                Log.d(TAG, "Banner ad render success: width=$width, height=$height")
+                
+                // 根据文档说明：onRenderSuccess方法内返回的view为null需要通过getAdView获取view
+                val adView = view ?: ad.getExpressAdView()
+                if (adView != null && bannerContainer != null) {
+                    bannerContainer?.removeAllViews()
+                    bannerContainer?.addView(adView)
+                }
+                
+                val eventData = Arguments.createMap().apply {
+                    putDouble("width", width.toDouble())
+                    putDouble("height", height.toDouble())
+                }
+                sendEvent("onRenderSuccess", eventData)
             }
         })
-        
+
         // 设置dislike回调
-        val activity = getActivity()
         ad.setDislikeCallback(activity, object : TTAdDislike.DislikeInteractionCallback {
             override fun onShow() {
-                Log.d(TAG, "dislike dialog show")
+                Log.d(TAG, "Dislike dialog shown")
             }
-            
+
             override fun onSelected(position: Int, value: String?, enforce: Boolean) {
-                Log.d(TAG, "banner closed, position: $position, value: $value")
-                onDislikeCallback?.invoke(position, value ?: "")
-                // 移除广告View
-                removeAllViews()
+                Log.d(TAG, "Dislike selected: position=$position, value=$value")
+                val eventData = Arguments.createMap().apply {
+                    putInt("position", position)
+                    putString("value", value ?: "")
+                }
+                sendEvent("onDislike", eventData)
+                // 移除广告视图
+                container.removeAllViews()
+                destroyAd()
             }
-            
+
             override fun onCancel() {
-                Log.d(TAG, "dislike dialog cancel")
+                Log.d(TAG, "Dislike dialog cancelled")
             }
         })
-        
+
+        // 检查广告是否就绪（根据文档建议）
+        val mediationManager = ad.mediationManager
+        if (mediationManager != null && !mediationManager.isReady) {
+            Log.w(TAG, "Ad is not ready yet, waiting for render")
+            // 广告可能还未就绪，等待渲染完成
+            return
+        }
+
         // 获取广告View并添加到容器
         val bannerView = ad.getExpressAdView()
         if (bannerView != null) {
-            removeAllViews()
-            addView(bannerView, LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
-            ))
+            container.removeAllViews()
+            container.addView(bannerView)
         } else {
-            Log.w(TAG, "banner view is null")
-            onRenderFailCallback?.invoke(-1, "banner view is null")
+            Log.w(TAG, "Banner ad view is null, ad may need to render first")
+            // 根据文档说明：onRenderSuccess方法内返回的view为null需要通过getAdView获取view
+            // 这里先记录日志，等待onRenderSuccess回调后再获取view
         }
     }
-    
-    /**
-     * 设置点击回调
-     */
-    fun setOnAdClickedCallback(callback: (() -> Unit)?) {
-        this.onAdClickedCallback = callback
-    }
-    
-    /**
-     * 设置展示回调
-     */
-    fun setOnAdShowCallback(callback: (() -> Unit)?) {
-        this.onAdShowCallback = callback
-    }
-    
-    /**
-     * 设置渲染失败回调
-     */
-    fun setOnRenderFailCallback(callback: ((code: Int, msg: String) -> Unit)?) {
-        this.onRenderFailCallback = callback
-    }
-    
-    /**
-     * 设置渲染成功回调
-     */
-    fun setOnRenderSuccessCallback(callback: ((width: Float, height: Float) -> Unit)?) {
-        this.onRenderSuccessCallback = callback
-    }
-    
-    /**
-     * 设置dislike回调
-     */
-    fun setOnDislikeCallback(callback: ((position: Int, value: String) -> Unit)?) {
-        this.onDislikeCallback = callback
-    }
-    
-    /**
-     * 设置错误回调
-     */
-    fun setOnErrorCallback(callback: ((code: Int, msg: String) -> Unit)?) {
-        this.onErrorCallback = callback
-    }
-    
+
     /**
      * 销毁广告
      */
@@ -270,34 +292,46 @@ class BannerAdView(context: Context) : FrameLayout(context) {
         bannerAd = null
         adNativeLoader = null
         isAdLoaded = false
-        removeAllViews()
+        
+        bannerContainer?.removeAllViews()
     }
-    
+
     /**
      * 检查广告是否已加载
      */
     fun isAdLoaded(): Boolean {
         return isAdLoaded && bannerAd != null
     }
-    
+
     /**
-     * 获取当前的Activity
+     * 发送事件到React Native
      */
-    private fun getActivity(): Activity? {
-        // 如果context本身就是Activity，直接返回
-        if (context is Activity) {
-            return context as Activity
+    private fun sendEvent(eventName: String, data: WritableMap?) {
+        val event = Arguments.createMap().apply {
+            if (data != null) {
+                putMap("nativeEvent", data)
+            }
         }
-        // 如果是ReactContext，尝试获取currentActivity
-        if (context is ReactContext) {
-            return (context as ReactContext).currentActivity
-        }
-        return null
+        reactContext.getJSModule(RCTEventEmitter::class.java)
+            .receiveEvent(id, eventName, event)
     }
-    
+
+    /**
+     * 发送错误事件
+     */
+    private fun sendErrorEvent(code: Int, message: String) {
+        val eventData = Arguments.createMap().apply {
+            putInt("code", code)
+            putString("message", message)
+        }
+        sendEvent("onError", eventData)
+    }
+
+    /**
+     * 组件销毁时清理资源
+     */
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        // View从窗口移除时销毁广告
         destroyAd()
     }
 }
