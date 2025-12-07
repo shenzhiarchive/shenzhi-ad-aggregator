@@ -7,6 +7,7 @@ import com.facebook.react.module.model.ReactModuleInfo
 import com.facebook.react.module.model.ReactModuleInfoProvider
 import com.facebook.react.uimanager.ViewManager
 import com.shenzhi.adaggregator.banner.BannerAdViewManager
+import com.shenzhi.adaggregator.banner.BannerAdViewComponentManager
 import java.util.HashMap
 
 class AdAggregatorPackage : BaseReactPackage() {
@@ -35,7 +36,9 @@ class AdAggregatorPackage : BaseReactPackage() {
   
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
     return listOf(
-      BannerAdViewManager()
+      BannerAdViewManager(),
+      // 同时注册Fabric组件（如果启用新架构，React Native会自动使用Fabric组件）
+      com.shenzhi.adaggregator.banner.BannerAdViewComponentManager()
     )
   }
 }

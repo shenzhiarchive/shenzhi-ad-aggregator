@@ -3,8 +3,12 @@ import {
   View,
   requireNativeComponent,
   type ViewStyle,
+  type StyleProp,
   StyleSheet,
+  UIManager,
+  findNodeHandle,
 } from 'react-native';
+import BannerAdViewNativeComponent from './BannerAdViewNativeComponent';
 
 /**
  * Banner广告尺寸
@@ -12,6 +16,83 @@ import {
 export interface BannerSize {
   width: number; // 单位：dp
   height: number; // 单位：dp
+}
+
+/**
+ * ECPM信息
+ * 展示广告后获取的详细信息
+ */
+export interface EcpmInfo {
+  /**
+   * SDK名称
+   */
+  sdkName?: string;
+
+  /**
+   * 自定义SDK名称
+   */
+  customSdkName?: string;
+
+  /**
+   * 广告位ID
+   */
+  slotId?: string;
+
+  /**
+   * ECPM价格（单位：分）
+   * 注意：一般情况下兜底代码位的ecpm是0
+   */
+  ecpm?: number;
+
+  /**
+   * 请求竞价类型
+   */
+  reqBiddingType?: number;
+
+  /**
+   * 错误信息
+   */
+  errorMsg?: string;
+
+  /**
+   * 请求ID
+   */
+  requestId?: string;
+
+  /**
+   * 广告位类型
+   */
+  ritType?: number;
+
+  /**
+   * AB测试ID
+   */
+  abTestId?: string;
+
+  /**
+   * 场景ID
+   */
+  scenarioId?: string;
+
+  /**
+   * 流量分组ID
+   */
+  segmentId?: string;
+
+  /**
+   * 渠道名称
+   */
+  channel?: string;
+
+  /**
+   * 子渠道名称
+   */
+  subChannel?: string;
+
+  /**
+   * 自定义数据
+   */
+  customData?: string;
 }
 
 // 原生组件接口
@@ -30,12 +111,23 @@ interface NativeBannerAdViewProps {
     nativeEvent: { position: number; value: string };
   }) => void;
   onError?: (event: { nativeEvent: { code: number; message: string } }) => void;
-  style?: ViewStyle;
+  onEcpmInfo?: (event: { nativeEvent: EcpmInfo }) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
-// 原生组件
+// 原生组件（用于旧架构兼容）
 const NativeBannerAdView =
-  requireNativeComponent<NativeBannerAdViewProps>('BannerAdView');
+  requireNativeComponent<NativeBannerAdViewProps>('ShenzhiBannerAdView');
+
+// 获取命令ID（用于Fabric和旧架构）
+const getCommands = () => {
+  const config = UIManager.getViewManagerConfig('ShenzhiBannerAdView');
+  return {
+    loadAd: config?.Commands?.loadAd ?? 1,
+    destroy: config?.Commands?.destroy ?? 2,
+    isAdLoaded: config?.Commands?.isAdLoaded ?? 3,
+  };
+};
 
 /**
  * Banner广告事件
@@ -70,6 +162,12 @@ export interface BannerAdEvent {
    * 广告加载错误事件
    */
   onError?: (error: { code: number; message: string }) => void;
+
+  /**
+   * ECPM信息事件
+   * 在广告展示后触发，包含广告的详细信息
+   */
+  onEcpmInfo?: (info: EcpmInfo) => void;
 }
 
 /**
@@ -103,7 +201,7 @@ export interface BannerAdViewProps extends BannerAdEvent {
   /**
    * 容器样式
    */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -136,6 +234,7 @@ export interface BannerAdViewRef {
  *   adSize={{ width: 320, height: 50 }}
  *   onAdClicked={() => console.log('Ad clicked')}
  *   onAdShow={() => console.log('Ad shown')}
+ *   onEcpmInfo={(info) => console.log('ECPM Info:', info)}
  *   onError={(error) => console.log('Error:', error)}
  * />
  * ```
@@ -154,6 +253,7 @@ const BannerAdView = forwardRef<BannerAdViewRef, BannerAdViewProps>(
       onRenderSuccess,
       onDislike,
       onError,
+      onEcpmInfo,
     } = props;
 
     const viewRef = useRef<any>(null);
@@ -161,20 +261,45 @@ const BannerAdView = forwardRef<BannerAdViewRef, BannerAdViewProps>(
     // 暴露给父组件的方法
     useImperativeHandle(ref, () => ({
       loadAd: () => {
-        // 触发重新加载广告（通过更新props）
         if (viewRef.current) {
-          viewRef.current.setNativeProps({ codeId });
+          const nodeHandle = findNodeHandle(viewRef.current);
+          if (nodeHandle != null) {
+            try {
+              const commands = getCommands();
+              // 使用命令
+              UIManager.dispatchViewManagerCommand(nodeHandle, commands.loadAd, []);
+            } catch (e) {
+              // 回退到旧架构
+              viewRef.current?.setNativeProps?.({ codeId });
+            }
+          } else {
+            // 回退到旧架构
+            viewRef.current?.setNativeProps?.({ codeId });
+          }
         }
       },
       destroy: () => {
-        // 销毁广告（通过设置codeId为空）
         if (viewRef.current) {
-          viewRef.current.setNativeProps({ codeId: '' });
+          const nodeHandle = findNodeHandle(viewRef.current);
+          if (nodeHandle != null) {
+            try {
+              const commands = getCommands();
+              // 使用命令
+              UIManager.dispatchViewManagerCommand(nodeHandle, commands.destroy, []);
+            } catch (e) {
+              // 回退到旧架构
+              viewRef.current?.setNativeProps?.({ codeId: '' });
+            }
+          } else {
+            // 回退到旧架构
+            viewRef.current?.setNativeProps?.({ codeId: '' });
+          }
         }
       },
       isAdLoaded: () => {
-        // 检查广告是否已加载（需要原生支持）
-        return false; // 暂时返回false，后续可以通过原生方法实现
+        // 注意：isAdLoaded在旧架构中无法直接获取，需要通过其他方式实现
+        // 这里暂时返回false，实际实现需要原生支持
+        return false;
       },
     }));
 
@@ -229,9 +354,35 @@ const BannerAdView = forwardRef<BannerAdViewRef, BannerAdViewProps>(
         }
       : undefined;
 
+    const handleEcpmInfo = onEcpmInfo
+      ? (event: { nativeEvent: EcpmInfo }) => {
+          onEcpmInfo(event.nativeEvent);
+        }
+      : undefined;
+
+    const dynamicContainerStyle: ViewStyle | undefined = finalAdSize
+      ? {
+          ...(finalAdSize.width ? { width: finalAdSize.width } : {}),
+          ...(finalAdSize.height ? { minHeight: finalAdSize.height } : {}),
+        }
+      : undefined;
+
+    const dynamicNativeStyle: ViewStyle | undefined = finalAdSize
+      ? {
+          ...(finalAdSize.width ? { width: finalAdSize.width } : {}),
+          ...(finalAdSize.height ? { height: finalAdSize.height } : {}),
+        }
+      : undefined;
+
+    // 优先使用Fabric组件，如果不可用则回退到旧架构
+    const useFabric = BannerAdViewNativeComponent != null;
+    const Component = useFabric ? BannerAdViewNativeComponent : NativeBannerAdView;
+
     return (
-      <View style={[styles.container, style]}>
-        <NativeBannerAdView
+      <View
+        style={[styles.container, dynamicContainerStyle, style]}
+      >
+        <Component
           ref={viewRef}
           codeId={codeId}
           adSize={finalAdSize}
@@ -241,7 +392,8 @@ const BannerAdView = forwardRef<BannerAdViewRef, BannerAdViewProps>(
           onRenderSuccess={handleRenderSuccess}
           onDislike={handleDislike}
           onError={handleError}
-          style={styles.nativeView}
+          onEcpmInfo={handleEcpmInfo}
+          style={[styles.nativeView, dynamicNativeStyle]}
         />
       </View>
     );
@@ -256,7 +408,7 @@ const styles = StyleSheet.create({
   },
   nativeView: {
     width: '100%',
-    height: '100%',
+    minHeight: 1,
   },
 });
 
