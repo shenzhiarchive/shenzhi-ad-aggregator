@@ -36,15 +36,18 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text>Result: {isReady ? '初始化' : '没有初始化'}</Text>
-      {isReady && (
-        <BannerAdView
-          codeId="103503633"
-          adSize={{ width: 320, height: 50 }}
-          onAdClicked={() => console.log('Ad clicked')}
-          onAdShow={() => console.log('Ad shown')}
-          onError={(error) => console.log('Error:', error)}
-        />
-      )}
+      <View style={styles.banner}>
+        {isReady && (
+          <BannerAdView
+            codeId="103503633"
+            adSize={{ width: 320, height: 50 }}
+            onAdClicked={() => console.log('Ad clicked')}
+            onAdShow={() => console.log('Ad shown')}
+            onError={(error) => console.log('Error:', error)}
+            onEcpmInfo={(info) => console.log('ecpm:', info)}
+          />
+        )}
+      </View>
     </View>
   );
 }
@@ -54,5 +57,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  banner: {
+    backgroundColor: '#7c3232',
   },
 });

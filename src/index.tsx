@@ -4,6 +4,7 @@ import BannerAdView, {
   type BannerAdViewRef,
   type BannerAdEvent,
   type BannerSize,
+  type EcpmInfo,
 } from './BannerAdView';
 /**
  * 初始化穿山甲融合SDK
@@ -31,4 +32,5 @@ export type {
   BannerAdViewRef,
   BannerAdEvent,
   BannerSize,
+  EcpmInfo,
 };

@@ -116,16 +116,29 @@ interface NativeBannerAdViewProps {
 }
 
 // 原生组件（用于旧架构兼容）
-const NativeBannerAdView =
-  requireNativeComponent<NativeBannerAdViewProps>('ShenzhiBannerAdView');
+const NativeBannerAdView = requireNativeComponent<NativeBannerAdViewProps>(
+  'ShenzhiBannerAdView'
+);
 
 // 获取命令ID（用于Fabric和旧架构）
 const getCommands = () => {
-  const config = UIManager.getViewManagerConfig('ShenzhiBannerAdView');
+  try {
+    const config = UIManager.getViewManagerConfig('ShenzhiBannerAdView');
+    if (config?.Commands) {
+      return {
+        loadAd: config.Commands.loadAd ?? 1,
+        destroy: config.Commands.destroy ?? 2,
+        isAdLoaded: config.Commands.isAdLoaded ?? 3,
+      };
+    }
+  } catch (e) {
+    // 如果获取配置失败，使用默认值
+  }
+  // 默认命令ID（与原生端保持一致）
   return {
-    loadAd: config?.Commands?.loadAd ?? 1,
-    destroy: config?.Commands?.destroy ?? 2,
-    isAdLoaded: config?.Commands?.isAdLoaded ?? 3,
+    loadAd: 1,
+    destroy: 2,
+    isAdLoaded: 3,
   };
 };
 
@@ -267,7 +280,11 @@ const BannerAdView = forwardRef<BannerAdViewRef, BannerAdViewProps>(
             try {
               const commands = getCommands();
               // 使用命令
-              UIManager.dispatchViewManagerCommand(nodeHandle, commands.loadAd, []);
+              UIManager.dispatchViewManagerCommand(
+                nodeHandle,
+                commands.loadAd,
+                []
+              );
             } catch (e) {
               // 回退到旧架构
               viewRef.current?.setNativeProps?.({ codeId });
@@ -285,7 +302,11 @@ const BannerAdView = forwardRef<BannerAdViewRef, BannerAdViewProps>(
             try {
               const commands = getCommands();
               // 使用命令
-              UIManager.dispatchViewManagerCommand(nodeHandle, commands.destroy, []);
+              UIManager.dispatchViewManagerCommand(
+                nodeHandle,
+                commands.destroy,
+                []
+              );
             } catch (e) {
               // 回退到旧架构
               viewRef.current?.setNativeProps?.({ codeId: '' });
@@ -376,12 +397,12 @@ const BannerAdView = forwardRef<BannerAdViewRef, BannerAdViewProps>(
 
     // 优先使用Fabric组件，如果不可用则回退到旧架构
     const useFabric = BannerAdViewNativeComponent != null;
-    const Component = useFabric ? BannerAdViewNativeComponent : NativeBannerAdView;
+    const Component = useFabric
+      ? BannerAdViewNativeComponent
+      : NativeBannerAdView;
 
     return (
-      <View
-        style={[styles.container, dynamicContainerStyle, style]}
-      >
+      <View style={[styles.container, dynamicContainerStyle, style]}>
         <Component
           ref={viewRef}
           codeId={codeId}

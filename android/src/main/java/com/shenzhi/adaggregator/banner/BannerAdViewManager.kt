@@ -17,7 +17,12 @@ import com.facebook.react.uimanager.events.RCTEventEmitter
 class BannerAdViewManager : SimpleViewManager<BannerAdView>() {
     
     companion object {
-        const val REACT_CLASS = "BannerAdView"
+        const val REACT_CLASS = "ShenzhiBannerAdView"
+        
+        // 命令ID
+        private const val COMMAND_LOAD_AD = 1
+        private const val COMMAND_DESTROY = 2
+        private const val COMMAND_IS_AD_LOADED = 3
         
         // 事件名称
         const val EVENT_AD_CLICKED = "onAdClicked"
@@ -26,6 +31,7 @@ class BannerAdViewManager : SimpleViewManager<BannerAdView>() {
         const val EVENT_RENDER_SUCCESS = "onRenderSuccess"
         const val EVENT_DISLIKE = "onDislike"
         const val EVENT_ERROR = "onError"
+        const val EVENT_ECPM_INFO = "onEcpmInfo"
     }
     
     override fun getName(): String {
@@ -72,6 +78,23 @@ class BannerAdViewManager : SimpleViewManager<BannerAdView>() {
             sendEvent(bannerView, EVENT_ERROR, eventData)
         }
         
+        bannerView.setOnEcpmInfoCallback { ecpmInfo ->
+            val eventData = Arguments.createMap()
+            ecpmInfo.forEach { (key, value) ->
+                when (value) {
+                    is String -> eventData.putString(key, value)
+                    is Int -> eventData.putInt(key, value)
+                    is Long -> eventData.putDouble(key, value.toDouble())
+                    is Double -> eventData.putDouble(key, value)
+                    is Float -> eventData.putDouble(key, value.toDouble())
+                    is Boolean -> eventData.putBoolean(key, value)
+                    null -> eventData.putNull(key)
+                    else -> eventData.putString(key, value.toString())
+                }
+            }
+            sendEvent(bannerView, EVENT_ECPM_INFO, eventData)
+        }
+        
         return bannerView
     }
     
@@ -98,6 +121,33 @@ class BannerAdViewManager : SimpleViewManager<BannerAdView>() {
         }
     }
     
+    /**
+     * 接收命令
+     */
+    override fun receiveCommand(
+        root: BannerAdView,
+        commandId: Int,
+        args: com.facebook.react.bridge.ReadableArray?
+    ) {
+        when (commandId) {
+            COMMAND_LOAD_AD -> root.loadAd()
+            COMMAND_DESTROY -> root.destroyAd()
+            COMMAND_IS_AD_LOADED -> {
+                // isAdLoaded 通过返回值处理，这里不需要实现
+            }
+        }
+    }
+    
+    /**
+     * 获取命令映射
+     */
+    override fun getCommandsMap(): Map<String, Int>? {
+        return MapBuilder.of(
+            "loadAd", COMMAND_LOAD_AD,
+            "destroy", COMMAND_DESTROY,
+            "isAdLoaded", COMMAND_IS_AD_LOADED
+        )
+    }
     
     /**
      * 发送事件到React Native
@@ -120,7 +170,8 @@ class BannerAdViewManager : SimpleViewManager<BannerAdView>() {
             EVENT_RENDER_FAIL, MapBuilder.of("registrationName", EVENT_RENDER_FAIL),
             EVENT_RENDER_SUCCESS, MapBuilder.of("registrationName", EVENT_RENDER_SUCCESS),
             EVENT_DISLIKE, MapBuilder.of("registrationName", EVENT_DISLIKE),
-            EVENT_ERROR, MapBuilder.of("registrationName", EVENT_ERROR)
+            EVENT_ERROR, MapBuilder.of("registrationName", EVENT_ERROR),
+            EVENT_ECPM_INFO, MapBuilder.of("registrationName", EVENT_ECPM_INFO)
         )
     }
 }
