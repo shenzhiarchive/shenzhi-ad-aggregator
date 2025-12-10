@@ -316,9 +316,9 @@ class BannerAdView(context: Context) : FrameLayout(context) {
      * 设置广告尺寸（单位：dp）
      */
     fun setAdSize(widthDp: Float, heightDp: Float) {
-        val widthPx = UIUtils.dip2px(context, widthDp).toInt()
-        val heightPx = UIUtils.dip2px(context, heightDp).toInt()
-        
+        val widthPx = UIUtils.dp2px(context, widthDp).toInt()
+        val heightPx = UIUtils.dp2px(context, heightDp).toInt()
+
         if (this.width != widthPx || this.height != heightPx) {
             this.width = widthPx
             this.height = heightPx
@@ -360,7 +360,7 @@ class BannerAdView(context: Context) : FrameLayout(context) {
                 Log.d(TAG, "banner showed")
                 isAdShown = true
                 onAdShowCallback?.invoke()
-                
+
                 // 获取ECPM信息
                 getEcpmInfo()
             }
@@ -417,7 +417,7 @@ class BannerAdView(context: Context) : FrameLayout(context) {
         isAdLoaded = false
         isAdShown = false
         adNativeLoader = null
-        
+
         // 清空容器
         bannerContainer?.removeAllViews()
     }
@@ -462,7 +462,7 @@ class BannerAdView(context: Context) : FrameLayout(context) {
      */
     private fun resolveLayoutHeight(renderHeight: Float): Int {
         return if (renderHeight > 0) {
-            UIUtils.dip2px(context, renderHeight)
+            UIUtils.dp2px(context, renderHeight)
         } else if (height > 0) {
             height
         } else {

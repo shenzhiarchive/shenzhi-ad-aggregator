@@ -4,9 +4,8 @@ import android.content.Context
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.Arguments
-import com.facebook.react.uimanager.events.RCTEventEmitter
+import com.facebook.react.uimanager.events.RCTModernEventEmitter
 import com.facebook.react.views.view.ReactViewGroup
-import com.shenzhi.adaggregator.banner.BannerAdView
 
 /**
  * Banner广告Fabric Component
@@ -14,22 +13,21 @@ import com.shenzhi.adaggregator.banner.BannerAdView
  */
 class BannerAdViewComponent(context: Context) : ReactViewGroup(context) {
 
-    private val bannerAdView: BannerAdView
+    private val bannerAdView: BannerAdView = BannerAdView(context)
 
-    init {
-        bannerAdView = BannerAdView(context)
+  init {
 
-        // 设置布局参数，确保BannerAdView能够正确显示
-        val layoutParams = android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
-        )
-        bannerAdView.layoutParams = layoutParams
+      // 设置布局参数，确保BannerAdView能够正确显示
+      val layoutParams = LayoutParams(
+          LayoutParams.MATCH_PARENT,
+          LayoutParams.WRAP_CONTENT
+      )
+      bannerAdView.layoutParams = layoutParams
 
-        addView(bannerAdView)
+      addView(bannerAdView)
 
-        // 设置事件回调
-        setupEventCallbacks()
+      // 设置事件回调
+      setupEventCallbacks()
     }
 
     /**
@@ -135,7 +133,7 @@ class BannerAdViewComponent(context: Context) : ReactViewGroup(context) {
     private fun sendEvent(eventName: String, params: WritableMap?) {
         val reactContext = context as? com.facebook.react.bridge.ReactContext
         reactContext?.let { ctx ->
-            ctx.getJSModule(RCTEventEmitter::class.java)
+            ctx.getJSModule(RCTModernEventEmitter::class.java)
                 .receiveEvent(id, eventName, params ?: Arguments.createMap())
         }
     }
