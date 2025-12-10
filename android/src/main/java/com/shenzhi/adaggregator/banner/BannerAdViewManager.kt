@@ -4,11 +4,10 @@ import android.view.View
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
-import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.facebook.react.uimanager.events.RCTEventEmitter
+import com.facebook.react.uimanager.events.RCTModernEventEmitter
 
 /**
  * Banner广告ViewManager
@@ -124,6 +123,7 @@ class BannerAdViewManager : SimpleViewManager<BannerAdView>() {
     /**
      * 接收命令
      */
+    @Deprecated("This method overrides a deprecated member")
     override fun receiveCommand(
         root: BannerAdView,
         commandId: Int,
@@ -142,20 +142,21 @@ class BannerAdViewManager : SimpleViewManager<BannerAdView>() {
      * 获取命令映射
      */
     override fun getCommandsMap(): Map<String, Int>? {
-        return MapBuilder.of(
-            "loadAd", COMMAND_LOAD_AD,
-            "destroy", COMMAND_DESTROY,
-            "isAdLoaded", COMMAND_IS_AD_LOADED
+        return mapOf(
+            "loadAd" to COMMAND_LOAD_AD,
+            "destroy" to COMMAND_DESTROY,
+            "isAdLoaded" to COMMAND_IS_AD_LOADED
         )
     }
     
     /**
      * 发送事件到React Native
      */
+    @Suppress("DEPRECATION")
     private fun sendEvent(view: View, eventName: String, params: WritableMap?) {
         val reactContext = view.context as? com.facebook.react.bridge.ReactContext
         reactContext?.let { ctx ->
-            ctx.getJSModule(RCTEventEmitter::class.java)
+            ctx.getJSModule(RCTModernEventEmitter::class.java)
                 .receiveEvent(view.id, eventName, params ?: Arguments.createMap())
         }
     }
@@ -164,14 +165,14 @@ class BannerAdViewManager : SimpleViewManager<BannerAdView>() {
      * 获取导出的事件映射
      */
     override fun getExportedCustomDirectEventTypeConstants(): Map<String, Map<String, String>>? {
-        return MapBuilder.of(
-            EVENT_AD_CLICKED, MapBuilder.of("registrationName", EVENT_AD_CLICKED),
-            EVENT_AD_SHOW, MapBuilder.of("registrationName", EVENT_AD_SHOW),
-            EVENT_RENDER_FAIL, MapBuilder.of("registrationName", EVENT_RENDER_FAIL),
-            EVENT_RENDER_SUCCESS, MapBuilder.of("registrationName", EVENT_RENDER_SUCCESS),
-            EVENT_DISLIKE, MapBuilder.of("registrationName", EVENT_DISLIKE),
-            EVENT_ERROR, MapBuilder.of("registrationName", EVENT_ERROR),
-            EVENT_ECPM_INFO, MapBuilder.of("registrationName", EVENT_ECPM_INFO)
+        return mapOf(
+            EVENT_AD_CLICKED to mapOf("registrationName" to EVENT_AD_CLICKED),
+            EVENT_AD_SHOW to mapOf("registrationName" to EVENT_AD_SHOW),
+            EVENT_RENDER_FAIL to mapOf("registrationName" to EVENT_RENDER_FAIL),
+            EVENT_RENDER_SUCCESS to mapOf("registrationName" to EVENT_RENDER_SUCCESS),
+            EVENT_DISLIKE to mapOf("registrationName" to EVENT_DISLIKE),
+            EVENT_ERROR to mapOf("registrationName" to EVENT_ERROR),
+            EVENT_ECPM_INFO to mapOf("registrationName" to EVENT_ECPM_INFO)
         )
     }
 }

@@ -50,6 +50,7 @@ object UIUtils {
     /**
      * 隐藏底部UI菜单
      */
+    @Suppress("DEPRECATION")
     fun hideBottomUIMenu(activity: Activity?) {
         if (activity == null) {
             return
@@ -79,6 +80,7 @@ object UIUtils {
     /**
      * 获取屏幕真实高度，不包含下方虚拟导航栏
      */
+    @Suppress("DEPRECATION")
     fun getRealHeight(context: Context): Int {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val display = windowManager.defaultDisplay
@@ -342,6 +344,7 @@ object UIUtils {
      * 获取全面屏宽高
      * @return int数组，[0]为宽度，[1]为高度
      */
+    @Suppress("DEPRECATION")
     fun getScreenSize(context: Context?): IntArray {
         val size = intArrayOf(0, 0)
         if (context == null) {

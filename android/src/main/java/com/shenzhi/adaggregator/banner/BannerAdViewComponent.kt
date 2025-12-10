@@ -130,6 +130,7 @@ class BannerAdViewComponent(context: Context) : ReactViewGroup(context) {
     /**
      * 发送事件到React Native
      */
+    @Suppress("DEPRECATION")
     private fun sendEvent(eventName: String, params: WritableMap?) {
         val reactContext = context as? com.facebook.react.bridge.ReactContext
         reactContext?.let { ctx ->

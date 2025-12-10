@@ -45,6 +45,7 @@ class BannerAdViewComponentManager : SimpleViewManager<BannerAdViewComponent>() 
         view.setAdSize(adSize)
     }
     
+    @Deprecated("This method overrides a deprecated member")
     override fun receiveCommand(
         root: BannerAdViewComponent,
         commandId: Int,
@@ -60,22 +61,22 @@ class BannerAdViewComponentManager : SimpleViewManager<BannerAdViewComponent>() 
     }
     
     override fun getCommandsMap(): Map<String, Int>? {
-        return com.facebook.react.common.MapBuilder.of(
-            "loadAd", COMMAND_LOAD_AD,
-            "destroy", COMMAND_DESTROY,
-            "isAdLoaded", COMMAND_IS_AD_LOADED
+        return mapOf(
+            "loadAd" to COMMAND_LOAD_AD,
+            "destroy" to COMMAND_DESTROY,
+            "isAdLoaded" to COMMAND_IS_AD_LOADED
         )
     }
     
     override fun getExportedCustomDirectEventTypeConstants(): Map<String, Map<String, String>>? {
-        return com.facebook.react.common.MapBuilder.of(
-            "onAdClicked", com.facebook.react.common.MapBuilder.of("registrationName", "onAdClicked"),
-            "onAdShow", com.facebook.react.common.MapBuilder.of("registrationName", "onAdShow"),
-            "onRenderFail", com.facebook.react.common.MapBuilder.of("registrationName", "onRenderFail"),
-            "onRenderSuccess", com.facebook.react.common.MapBuilder.of("registrationName", "onRenderSuccess"),
-            "onDislike", com.facebook.react.common.MapBuilder.of("registrationName", "onDislike"),
-            "onError", com.facebook.react.common.MapBuilder.of("registrationName", "onError"),
-            "onEcpmInfo", com.facebook.react.common.MapBuilder.of("registrationName", "onEcpmInfo")
+        return mapOf(
+            "onAdClicked" to mapOf("registrationName" to "onAdClicked"),
+            "onAdShow" to mapOf("registrationName" to "onAdShow"),
+            "onRenderFail" to mapOf("registrationName" to "onRenderFail"),
+            "onRenderSuccess" to mapOf("registrationName" to "onRenderSuccess"),
+            "onDislike" to mapOf("registrationName" to "onDislike"),
+            "onError" to mapOf("registrationName" to "onError"),
+            "onEcpmInfo" to mapOf("registrationName" to "onEcpmInfo")
         )
     }
 }
