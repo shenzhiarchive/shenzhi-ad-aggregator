@@ -37,8 +37,7 @@
     <!-- 获取App ID: https://apps.admob.com -->
     <provider
       android:name="com.google.android.gms.ads.MobileAdsInitProvider"
-      android:authorities="${applicationId}.mobileadsinitprovider"
-      tools:replace="android:authorities" />
+      android:authorities="${applicationId}.mobileadsinitprovider" />
 
     <meta-data
         android:name="com.google.android.gms.ads.APPLICATION_ID"
@@ -83,15 +82,13 @@
     <activity
       android:name="com.baidu.mobads.sdk.api.AppActivity"
       android:configChanges="screenSize|keyboard|keyboardHidden|orientation"
-      android:theme="@android:style/Theme.NoTitleBar"
-      tools:replace="android:configChanges" />
+      android:theme="@android:style/Theme.NoTitleBar" />
      <!-- 声明打开显示激励视频/全屏视频的Activity-->
      <activity
        android:name="com.baidu.mobads.sdk.api.MobRewardVideoActivity"
        android:configChanges="screenSize|orientation|keyboardHidden"
        android:launchMode="singleTask"
-       android:theme="@android:style/Theme.Translucent.NoTitleBar"
-       tools:replace="android:configChanges" />
+       android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
     <!-- 如果targetSdkVersion设置值>=24，则强烈建议添加以下provider，否则会影响app变现 -->
     <!-- android:authorities="${packageName}.bd.provider" authorities中${packageName}部分必须替换成app自己的包名 -->
@@ -123,13 +120,11 @@
     <activity
       android:name="com.qq.e.ads.PortraitADActivity"
       android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-      tools:replace="android:configChanges"
       android:screenOrientation="portrait" />
     <activity
       android:name="com.qq.e.ads.LandscapeADActivity"
       android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-      android:screenOrientation="landscape"
-      tools:replace="android:screenOrientation,android:configChanges" />
+      android:screenOrientation="landscape" />
 
     <!-- 声明SDK所需要的组件 -->
     <service
@@ -139,7 +134,6 @@
 
     <activity
       android:name="com.qq.e.ads.ADActivity"
-      tools:replace="android:configChanges"
       android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
     <!-- GDT end================== -->
 
@@ -147,8 +141,7 @@
     <activity
         android:name="com.sigmob.sdk.base.common.AdActivity"
         android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-        android:theme="@style/sig_transparent_style"
-        tools:replace="android:theme" />
+        android:theme="@style/sig_transparent_style" />
 
     <provider
         android:name="com.sigmob.sdk.SigmobFileProvider"
