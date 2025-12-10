@@ -120,10 +120,24 @@ const NativeBannerAdView = requireNativeComponent<NativeBannerAdViewProps>(
   'ShenzhiBannerAdView'
 );
 
+// ViewManager 配置类型定义
+interface ViewManagerConfig {
+  Commands?: {
+    loadAd?: number;
+    destroy?: number;
+    isAdLoaded?: number;
+    [key: string]: number | undefined;
+  };
+  [key: string]: unknown;
+}
+
 // 获取命令ID（用于Fabric和旧架构）
 const getCommands = () => {
   try {
-    const config = UIManager.getViewManagerConfig('ShenzhiBannerAdView');
+    const config = UIManager.getViewManagerConfig('ShenzhiBannerAdView') as
+      | ViewManagerConfig
+      | null
+      | undefined;
     if (config?.Commands) {
       return {
         loadAd: config.Commands.loadAd ?? 1,
