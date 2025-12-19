@@ -14,3 +14,5 @@ export interface NativeProps extends ViewProps {
 export default codegenNativeComponent<NativeProps>(
   'ShenzhiBannerAdView'
 ) as HostComponent<NativeProps>;
+
+

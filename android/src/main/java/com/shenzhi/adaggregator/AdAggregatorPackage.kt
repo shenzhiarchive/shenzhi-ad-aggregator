@@ -11,6 +11,17 @@ import com.shenzhi.adaggregator.banner.BannerAdViewComponentManager
 import java.util.HashMap
 
 class AdAggregatorPackage : BaseReactPackage() {
+  private fun isFabricEnabledSafely(): Boolean {
+    // 用反射避免对较新 RN API 的编译期强依赖（老 RN 可能没有该类）
+    return try {
+      val clazz = Class.forName("com.facebook.react.defaults.DefaultNewArchitectureEntryPoint")
+      val method = clazz.getMethod("getFabricEnabled")
+      (method.invoke(null) as? Boolean) ?: false
+    } catch (_: Throwable) {
+      false
+    }
+  }
+
   override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
     return when (name) {
       PangleAdManagerModule.NAME -> PangleAdManagerModule(reactContext)
@@ -35,10 +46,12 @@ class AdAggregatorPackage : BaseReactPackage() {
   }
   
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
-    return listOf(
-      BannerAdViewManager(),
-      // 同时注册Fabric组件（如果启用新架构，React Native会自动使用Fabric组件）
-      com.shenzhi.adaggregator.banner.BannerAdViewComponentManager()
-    )
+    // 注意：旧架构(Non-Fabric) 和 新架构(Fabric) 的 ViewManager 不能同时用相同的 name 注册，
+    // 否则会触发：Tried to register two views with the same name ShenzhiBannerAdView
+    return if (isFabricEnabledSafely()) {
+      listOf(BannerAdViewComponentManager())
+    } else {
+      listOf(BannerAdViewManager())
+    }
   }
 }

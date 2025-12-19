@@ -1,5 +1,5 @@
 import type { TurboModule } from 'react-native';
-import { TurboModuleRegistry } from 'react-native';
+import { NativeModules, TurboModuleRegistry } from 'react-native';
 
 /**
  * 初始化配置参数接口
@@ -46,4 +46,16 @@ export interface Spec extends TurboModule {
 /**
  * PangleAdManager TurboModule实例
  */
-export default TurboModuleRegistry.getEnforcing<Spec>('PangleAdManager');
+const TurboModule = TurboModuleRegistry.get<Spec>('PangleAdManager');
+const LegacyModule = NativeModules?.PangleAdManager as Spec | undefined;
+
+const PangleAdManager: Spec | undefined = TurboModule ?? LegacyModule;
+
+if (!PangleAdManager) {
+  // 这里不要静默失败，否则调用方会出现 `Cannot read property 'xxx' of undefined`
+  throw new Error(
+    "Native module 'PangleAdManager' not found. Did you rebuild the app after installing the library?"
+  );
+}
+
+export default PangleAdManager;
