@@ -1,0 +1,60 @@
+---
+description: "Banner 广告开发规范"
+alwaysApply: true
+---
+
+# Banner 广告开发规范
+
+## 架构要求
+
+1. **必须使用 Native Components**
+   - Banner 广告必须通过 Native Components 实现
+   - 必须兼容 React Native 新架构（Fabric）
+   - 通过 `@react-native/codegen` 生成组件声明
+
+2. **组件命名规范**
+   - 组件名必须语义清晰，例如：`PangleBannerView`
+   - 命名应体现广告类型和平台特性
+
+## 组件职责
+
+Banner 组件应负责以下功能：
+
+1. **视图管理**
+   - 创建和管理广告原生 View
+   - 处理视图生命周期
+
+2. **广告生命周期**
+   - 加载 Banner 广告
+   - 展示 Banner 广告
+   - 销毁 Banner 广告实例
+
+3. **配置管理**
+   - 通过 props 接收广告位 ID
+   - 通过 props 控制广告尺寸
+   - 通过 props 控制刷新策略
+   - 通过 props 传递其他配置参数
+
+## 必须遵循
+
+1. 使用 `@react-native/codegen` 进行代码生成
+2. 组件接口必须类型安全（TypeScript）
+3. 所有 Banner 相关逻辑必须在 Native Components 中实现
+4. JS 层仅通过组件 props 与原生层交互
+
+## 严格禁止
+
+1. **禁止使用旧架构**
+   - 不允许使用 `UIManager` + `requireNativeComponent`
+   - 不允许使用旧版组件注册方式
+
+2. **禁止直接调用 Native Module**
+   - JS 层不允许直接调用 Banner 相关的 Native Module 方法
+   - 所有交互必须通过组件 props 和事件
+
+3. **禁止混合逻辑**
+   - Banner 组件中不允许混入其他广告类型（如插屏、激励视频等）的逻辑
+   - 每个广告类型应有独立的组件实现
+
+4. **禁止在 JS 层缓存 Android Context**
+   - Context 管理必须在原生层完成

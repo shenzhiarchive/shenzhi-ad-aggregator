@@ -1,2 +1,94 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
+
+  <uses-sdk tools:overrideLibrary=" com.bytedance.gromore,com.bytedance.sdk.openadsdk,com.bytedance.msdk.adapter.admob,com.bytedance.msdk.adapter.BaiduMobAds,com.bytedance.msdk.adapter.gdt,com.bytedance.msdk.adapter.ks,com.bytedance.msdk.adapter.sigmob,com.bytedance.msdk.adapter.xiaomi,com.bytedance.tools"/>
+
+  <!-- 穿山甲 SDK 所需权限 -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+  <!--可选权限，申请后用于防作弊功能以及有助于广告平台投放广告-->
+  <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+  <permission
+    android:name="${applicationId}.openadsdk.permission.TT_PANGOLIN"
+    android:protectionLevel="signature" />
+  <uses-permission android:name="${applicationId}.openadsdk.permission.TT_PANGOLIN" />
+
+  <!--建议添加“query_all_package”权限，穿山甲将通过此权限在Android R系统上判定广告对应的应用是否在用户的app上安装，避免投放错误的广告，以此提高用户的广告体验。若添加此权限，需要在您的用户隐私文档中声明！ -->
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+
+  <!-- 聚合三方ADN可选权限 -->
+  <!-- 可选权限 -->
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+  <!--suppress DeprecatedClassUsageInspection -->
+  <uses-permission android:name="android.permission.GET_TASKS" />
+  <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
+
+  <application>
+
+    <!-- 穿山甲 start================== -->
+    <provider
+      android:name="com.bytedance.sdk.openadsdk.TTFileProvider"
+      android:authorities="${applicationId}.TTFileProvider"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/pangle_file_paths" />
+    </provider>
+    <!-- 穿山甲 end================== -->
+
+
+    <!-- admob start================== -->
+    <!-- AdMob App ID -->
+    <!-- 使用占位符，应用可以通过build.gradle中的manifestPlaceholders配置 -->
+    <!-- 默认值为测试App ID，生产环境请在应用的build.gradle中配置真实App ID -->
+    <!-- 获取App ID: https://apps.admob.com -->
+    <provider
+      android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+      android:authorities="${applicationId}.mobileadsinitprovider"
+      tools:replace="android:authorities" />
+
+    <meta-data
+      android:name="com.google.android.gms.ads.APPLICATION_ID"
+      android:value="${ADMOB_APP_ID}"/>
+
+    <!--- admob end================== -->
+
+    <!-- baidu start================== -->
+    <!-- 声明打开落地页的Activity（不建议修改主题配置）-->
+    <activity
+      android:name="com.baidu.mobads.sdk.api.AppActivity"
+      android:configChanges="screenSize|keyboard|keyboardHidden|orientation"
+      android:theme="@android:style/Theme.NoTitleBar" />
+    <!-- 声明打开显示激励视频/全屏视频的Activity-->
+    <activity
+      android:name="com.baidu.mobads.sdk.api.MobRewardVideoActivity"
+      android:configChanges="screenSize|orientation|keyboardHidden"
+      android:launchMode="singleTask"
+      android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+    <!-- 如果targetSdkVersion设置值>=24，则强烈建议添加以下provider，否则会影响app变现 -->
+    <!-- android:authorities="${packageName}.bd.provider" authorities中${packageName}部分必须替换成app自己的包名 -->
+    <!-- 原来的FileProvider在新版本中改为BdFileProvider,继承自v4的FileProvider,需要在应用内引用support-v4包 -->
+    <provider
+      android:name="com.baidu.mobads.sdk.api.BdFileProvider"
+      android:authorities="${applicationId}.bd.provider"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/bd_file_paths" />
+    </provider>
+    <!-- baidu end================== -->
+
+  </application>
 </manifest>

@@ -148,9 +148,10 @@
       ]
     ]
   },
+
   "codegenConfig": {
     "name": "AdAggregatorSpec",
-    "type": "modules",
+    "type": "all",
     "jsSrcsDir": "src",
     "android": {
       "javaPackageName": "com.shenzhi.adaggregator"
