@@ -148,7 +148,6 @@
       ]
     ]
   },
-
   "codegenConfig": {
     "name": "AdAggregatorSpec",
     "type": "all",
